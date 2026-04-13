@@ -1,84 +1,78 @@
-ex-oracle-ebs
-=============
+# Oracle E-Business Suite Extractor
 
-Description
+Extract data from Oracle E-Business Suite via direct database connection using the `oracledb` thin driver.
 
-**Table of Contents:**
+## Features
 
-[TOC]
+| Feature | Description |
+|---|---|
+| Preset Mode | Select EBS module and entity from dropdowns — component generates optimized SQL with JOINs |
+| Custom SQL Mode | Write any SELECT query for full flexibility |
+| Incremental Loading | Delta extraction via `LAST_UPDATE_DATE` columns |
+| Multi-Org Filtering | Operating Unit picker for `org_id` filtering |
+| GL Ledger Picker | Ledger selection for General Ledger queries |
+| Sync Actions | Test connection, list operating units, list ledgers, list modules, list entities |
 
-Functionality Notes
-===================
+## Supported EBS Modules
 
-Prerequisites
-=============
+- **AP** — Accounts Payable (invoices, lines, payments, suppliers)
+- **AR** — Accounts Receivable (invoices, receipts)
+- **GL** — General Ledger (journal lines, balances, chart of accounts)
+- **PO** — Purchasing (headers, lines)
+- **INV** — Inventory (transactions, items)
+- **HR** — Human Resources (employees)
+- **OM** — Order Management (order headers, lines)
+- **TCA** — Trading Community Architecture (parties, customer accounts)
 
-Ensure you have the necessary API token, register the application, etc.
+## Configuration
 
-Features
-========
+### Connection Settings (configSchema)
 
-| **Feature**             | **Description**                               |
-|-------------------------|-----------------------------------------------|
-| Generic UI Form         | Dynamic UI form for easy configuration.       |
-| Row-Based Configuration | Allows structuring the configuration in rows. |
-| OAuth                   | OAuth authentication enabled.                 |
-| Incremental Loading     | Fetch data in new increments.                 |
-| Backfill Mode           | Supports seamless backfill setup.             |
-| Date Range Filter       | Specify the date range for data retrieval.    |
+| Parameter | Description |
+|---|---|
+| `db_host` | Oracle database server hostname or IP |
+| `db_port` | Port (default: 1521) |
+| `db_service_name` | Oracle service name (e.g. `ebs_EBSDB`) |
+| `#db_user` | Database username (encrypted) |
+| `#db_password` | Database password (encrypted) |
 
-Supported Endpoints
-===================
+### Extraction Row (configRowSchema)
 
-If you need additional endpoints, please submit your request to
-[ideas.keboola.com](https://ideas.keboola.com/).
+| Parameter | Description |
+|---|---|
+| `extraction_mode` | `preset` (guided) or `custom` (raw SQL) |
+| `module` | EBS module code (preset mode) |
+| `entity` | Entity within module (preset mode) |
+| `org_id` | Operating Unit ID for multi-org tables |
+| `ledger_id` | Ledger ID for GL queries |
+| `custom_query` | SQL SELECT statement (custom mode) |
+| `output_table` | Target table name in Keboola Storage |
+| `incremental` | Enable incremental loading |
+| `primary_key` | Primary key columns |
 
-Configuration
-=============
+## Development
 
-Param 1
--------
-Details about parameter 1.
-
-Param 2
--------
-Details about parameter 2.
-
-Output
-======
-
-Provides a list of tables, foreign keys, and schema.
-
-Development
------------
-
-To customize the local data folder path, replace the `CUSTOM_FOLDER` placeholder with your desired path in the `docker-compose.yml` file:
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    volumes:
-      - ./:/code
-      - ./CUSTOM_FOLDER:/data
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Clone this repository, initialize the workspace, and run the component using the following
-commands:
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-git clone  component-ex-oracle-ebs
+```bash
+git clone https://github.com/keboola/component-ex-oracle-ebs
 cd component-ex-oracle-ebs
 docker-compose build
 docker-compose run --rm dev
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+```
 
-Run the test suite and perform lint checks using this command:
+### Run tests
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+```bash
 docker-compose run --rm test
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+```
 
-Integration
-===========
+### Record functional test cassettes
 
-For details about deployment and integration with Keboola, refer to the
-[deployment section of the developer
-documentation](https://developers.keboola.com/extend/component/deployment/).
+Requires a running Oracle EBS instance and `tests/setup/secrets.json` with real credentials:
+
+```bash
+uv run python -m keboola.datadirtest scaffold --secrets tests/setup/secrets.json
+```
+
+## Deployment
+
+See [Keboola Developer Documentation](https://developers.keboola.com/extend/component/deployment/).
