@@ -159,8 +159,8 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "freezegun", specifier = ">=1.5.1" },
-    { name = "keboola-datadirtest", editable = "../datadirtest" },
-    { name = "keboola-vcr", editable = "../python-vcr-tests" },
+    { name = "keboola-datadirtest", git = "https://github.com/keboola/datadirtest.git?branch=feat%2Fdb-vcr-adapter" },
+    { name = "keboola-vcr", git = "https://github.com/keboola/python-vcr-tests.git?branch=feat%2Fdb-vcr-adapter" },
     { name = "mock", specifier = ">=5.2.0" },
     { name = "pre-commit", specifier = ">=4.5.0" },
     { name = "pytest", specifier = ">=9.0.2" },
@@ -223,18 +223,9 @@ wheels = [
 [[package]]
 name = "keboola-datadirtest"
 version = "0.0.0"
-source = { editable = "../datadirtest" }
+source = { git = "https://github.com/keboola/datadirtest.git?branch=feat%2Fdb-vcr-adapter#82f0c083263ffba193dd304439243de55b3f70a9" }
 dependencies = [
     { name = "keboola-vcr" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "keboola-vcr", specifier = ">=0.1.0" }]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pytest", specifier = ">=7.0.0" },
-    { name = "ruff", specifier = ">=0.15.0" },
 ]
 
 [[package]]
@@ -253,23 +244,10 @@ wheels = [
 [[package]]
 name = "keboola-vcr"
 version = "0.5.0"
-source = { editable = "../python-vcr-tests" }
+source = { git = "https://github.com/keboola/python-vcr-tests.git?branch=feat%2Fdb-vcr-adapter#aaa70504db8e6c687530868633f4a0135b717496" }
 dependencies = [
     { name = "freezegun" },
     { name = "vcrpy" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "freezegun", specifier = ">=1.5.5,<2" },
-    { name = "vcrpy", specifier = ">=8.1.1,<9" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pytest", specifier = ">=7.0" },
-    { name = "pytest-cov", specifier = ">=4.0" },
-    { name = "ruff", specifier = ">=0.15.0" },
 ]
 
 [[package]]

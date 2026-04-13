@@ -22,8 +22,8 @@ dev = [
 ]
 
 [tool.uv.sources]
-keboola-datadirtest = { path = "/Users/matyasjirat/VSCodeProjects/Keboola/datadirtest", editable = true }
-keboola-vcr = { path = "/Users/matyasjirat/VSCodeProjects/Keboola/python-vcr-tests", editable = true }
+keboola-datadirtest = { git = "https://github.com/keboola/datadirtest.git", branch = "feat/db-vcr-adapter" }
+keboola-vcr = { git = "https://github.com/keboola/python-vcr-tests.git", branch = "feat/db-vcr-adapter" }
 
 [tool.ruff]
 line-length = 120

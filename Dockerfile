@@ -8,8 +8,6 @@ ENV UV_PROJECT_ENVIRONMENT="/usr/local/"
 RUN uv sync --no-dev --frozen
 
 COPY src/ src/
-COPY scripts/ scripts/
-COPY deploy.sh .
 
 FROM base AS test
 RUN uv sync --all-groups --frozen
