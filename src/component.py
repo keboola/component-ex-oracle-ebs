@@ -64,6 +64,39 @@ class Component(ComponentBase):
             raise UserException("Select a module first, then reload entities.")
         return [SelectElement(value=e["value"], label=e["label"]) for e in get_entity_list(module)]
 
+    @sync_action("listTables")
+    def list_tables(self) -> list[SelectElement]:
+        """List EBS tables for a module prefix (e.g. AP → AP_INVOICES_ALL, AP_SUPPLIERS, ...)."""
+        self.params.validate_connection()
+        module = self.configuration.parameters.get("source", {}).get("module", "")
+        if not module:
+            raise UserException("Select a module first, then reload tables.")
+        # Map module keys to Oracle table prefixes
+        prefix_map = {
+            "ap": "AP_",
+            "ar": "RA_",
+            "gl": "GL_",
+            "po": "PO_",
+            "inv": "MTL_",
+            "hr": "PER_",
+            "om": "OE_",
+            "tca": "HZ_",
+        }
+        prefix = prefix_map.get(module, f"{module.upper()}_")
+        rows = self._build_client().list_module_tables(prefix)
+        return [SelectElement(value=r["TABLE_NAME"], label=r["TABLE_NAME"]) for r in rows]
+
+    @sync_action("validateQuery")
+    def validate_query(self) -> None:
+        """Run user's custom SQL with ROWNUM <= 10 and log column names + row count."""
+        self.params.validate_connection()
+        query = self.configuration.parameters.get("source", {}).get("custom_query", "")
+        if not query:
+            raise UserException("Enter a SQL query first.")
+        columns, rows = self._build_client().validate_query(query)
+        logging.info("Query valid — %d columns, %d sample rows", len(columns), len(rows))
+        logging.info("Columns: %s", ", ".join(columns))
+
     # ── Extraction ────────────────────────────────────────────────
 
     def _run_preset(self, client: OracleEBSClient) -> None:

@@ -44,6 +44,21 @@ class OracleEBSClient:
         _cols, rows = self.execute_query(sql)
         return rows
 
+    def list_module_tables(self, module_prefix: str) -> list[dict]:
+        sql = """
+            SELECT table_name
+            FROM all_tables
+            WHERE owner = 'APPS' AND table_name LIKE :prefix
+            ORDER BY table_name
+        """
+        _cols, rows = self.execute_query(sql, params={"prefix": f"{module_prefix.upper()}%"})
+        return rows
+
+    def validate_query(self, query: str) -> tuple[list[str], list[dict]]:
+        """Run a query with ROWNUM <= 10 limit and return columns + sample rows."""
+        limited = f"SELECT * FROM ({query.rstrip(';').strip()}) WHERE ROWNUM <= 10"
+        return self.execute_query(limited)
+
     def get_table_columns(self, table_name: str) -> list[dict]:
         parts = table_name.upper().split(".")
         owner = parts[0] if len(parts) > 1 else "APPS"

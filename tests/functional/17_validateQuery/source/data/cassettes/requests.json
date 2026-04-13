@@ -1,0 +1,10 @@
+{
+  "_metadata": {"db_driver": "oracledb", "freeze_time": null, "keboola_db_vcr_version": "0.1.0", "keboola_vcr_version": "0.5.0", "recorded_at": "2026-04-13T14:52:42.519444+00:00"},
+  "interactions": [
+
+  ],
+  "db_interactions": [
+    {"sql_normalized": "SELECT * FROM (SELECT VENDOR_ID, VENDOR_NAME FROM APPS.AP_SUPPLIERS ORDER BY VENDOR_ID) WHERE ROWNUM <= 10", "params_hash": "99914b932bd37a50b983c5e7c90ae93b", "description": [["VENDOR_ID", "<DbType DB_TYPE_NUMBER>"], ["VENDOR_NAME", "<DbType DB_TYPE_VARCHAR>"]], "rows": [[1, "GE Plastics"], [2, "GE Capital"], [3, "General Electric"], [4, "United Parcel Service"], [5, "Star Gate Ltd"], [6, "American Telephone and Telegraph"], [7, "Capp Consulting"], [8, "Jamie Frost"], [9, "Office Supplies, Inc."], [10, "Kerry Jones"]]}
+  ],
+  "version": 1
+}

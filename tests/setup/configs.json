@@ -332,5 +332,43 @@
         }
       }
     }
+  },
+  {
+    "name": "16_listTables_ap",
+    "description": "Sync action: list AP module tables from database",
+    "config": {
+      "action": "listTables",
+      "parameters": {
+        "connection": {
+          "db_host": "PLACEHOLDER",
+          "db_port": 1521,
+          "db_service_name": "PLACEHOLDER",
+          "#db_user": "PLACEHOLDER",
+          "#db_password": "PLACEHOLDER"
+        },
+        "source": {
+          "module": "ap"
+        }
+      }
+    }
+  },
+  {
+    "name": "17_validateQuery",
+    "description": "Sync action: validate custom SQL query with 10-row sample",
+    "config": {
+      "action": "validateQuery",
+      "parameters": {
+        "connection": {
+          "db_host": "PLACEHOLDER",
+          "db_port": 1521,
+          "db_service_name": "PLACEHOLDER",
+          "#db_user": "PLACEHOLDER",
+          "#db_password": "PLACEHOLDER"
+        },
+        "source": {
+          "custom_query": "SELECT vendor_id, vendor_name FROM apps.ap_suppliers ORDER BY vendor_id"
+        }
+      }
+    }
   }
 ]
