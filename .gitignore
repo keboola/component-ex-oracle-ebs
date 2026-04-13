@@ -19,4 +19,4 @@ tests/functional/*/source/data/out/
 tests/functional/*/source/data/in/
 
 # internal documentation (contains credentials)
-/docs/oracle-ebs-*.md
+/docs
