@@ -1,1 +1,136 @@
-{}
+{
+  "type": "object",
+  "title": "Extraction Row",
+  "required": ["source", "destination"],
+  "properties": {
+    "source": {
+      "type": "object",
+      "title": "Source",
+      "format": "collapse",
+      "propertyOrder": 1,
+      "properties": {
+        "extraction_mode": {
+          "type": "string",
+          "title": "Extraction Mode",
+          "enum": ["preset", "custom"],
+          "default": "preset",
+          "propertyOrder": 1
+        },
+        "module": {
+          "type": "string",
+          "title": "EBS Module",
+          "format": "select",
+          "enum": [],
+          "propertyOrder": 2,
+          "options": {
+            "async": {
+              "label": "Load Modules",
+              "action": "listModules",
+              "autoload": true
+            },
+            "dependencies": {
+              "source.extraction_mode": "preset"
+            }
+          }
+        },
+        "entity": {
+          "type": "string",
+          "title": "Entity",
+          "format": "select",
+          "enum": [],
+          "propertyOrder": 3,
+          "options": {
+            "async": {
+              "label": "Load Entities",
+              "action": "listEntities"
+            },
+            "dependencies": {
+              "source.extraction_mode": "preset"
+            }
+          }
+        },
+        "org_id": {
+          "type": "string",
+          "title": "Operating Unit (Org ID)",
+          "format": "select",
+          "enum": [],
+          "propertyOrder": 4,
+          "options": {
+            "async": {
+              "label": "Load Operating Units",
+              "action": "listOperatingUnits"
+            },
+            "dependencies": {
+              "source.extraction_mode": "preset"
+            }
+          }
+        },
+        "ledger_id": {
+          "type": "string",
+          "title": "Ledger",
+          "format": "select",
+          "enum": [],
+          "propertyOrder": 5,
+          "options": {
+            "async": {
+              "label": "Load Ledgers",
+              "action": "listLedgers"
+            },
+            "dependencies": {
+              "source.extraction_mode": "preset",
+              "source.module": "gl"
+            }
+          }
+        },
+        "custom_query": {
+          "type": "string",
+          "title": "Custom SQL Query",
+          "description": "Write a SQL SELECT query. Use apps. schema prefix for EBS tables.",
+          "format": "textarea",
+          "propertyOrder": 6,
+          "options": {
+            "dependencies": {
+              "source.extraction_mode": "custom"
+            }
+          }
+        }
+      }
+    },
+    "destination": {
+      "type": "object",
+      "title": "Destination",
+      "format": "collapse",
+      "required": ["output_table"],
+      "propertyOrder": 2,
+      "properties": {
+        "output_table": {
+          "type": "string",
+          "title": "Output Table Name",
+          "propertyOrder": 1
+        },
+        "incremental": {
+          "type": "boolean",
+          "title": "Incremental Loading",
+          "description": "When enabled, only rows updated since the last run are extracted (uses LAST_UPDATE_DATE).",
+          "default": false,
+          "propertyOrder": 2
+        },
+        "primary_key": {
+          "type": "array",
+          "title": "Primary Key Columns",
+          "description": "Leave empty to use the preset default.",
+          "format": "select",
+          "items": {
+            "type": "string",
+            "enum": []
+          },
+          "uniqueItems": true,
+          "propertyOrder": 3,
+          "options": {
+            "tags": true
+          }
+        }
+      }
+    }
+  }
+}

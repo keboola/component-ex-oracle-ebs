@@ -1,0 +1,23 @@
+{
+  "action": "run",
+  "parameters": {
+    "connection": {
+      "db_host": "PLACEHOLDER",
+      "db_port": 1521,
+      "db_service_name": "PLACEHOLDER",
+      "#db_user": "PLACEHOLDER",
+      "#db_password": "PLACEHOLDER"
+    },
+    "source": {
+      "extraction_mode": "custom",
+      "custom_query": "SELECT user_id, user_name, email_address, creation_date FROM apps.fnd_user WHERE ROWNUM <= 10 ORDER BY user_id"
+    },
+    "destination": {
+      "output_table": "ebs_fnd_users_sample",
+      "incremental": false,
+      "primary_key": [
+        "USER_ID"
+      ]
+    }
+  }
+}

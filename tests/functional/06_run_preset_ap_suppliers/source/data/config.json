@@ -1,0 +1,24 @@
+{
+  "action": "run",
+  "parameters": {
+    "connection": {
+      "db_host": "PLACEHOLDER",
+      "db_port": 1521,
+      "db_service_name": "PLACEHOLDER",
+      "#db_user": "PLACEHOLDER",
+      "#db_password": "PLACEHOLDER"
+    },
+    "source": {
+      "extraction_mode": "preset",
+      "module": "ap",
+      "entity": "ap_suppliers"
+    },
+    "destination": {
+      "output_table": "ebs_ap_suppliers",
+      "incremental": false,
+      "primary_key": [
+        "VENDOR_ID"
+      ]
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "files": {},
+  "hash_algorithm": "sha256",
+  "tables": {
+    "ebs_ap_suppliers.csv": {
+      "columns": [
+        "vendor_id",
+        "vendor_name",
+        "vendor_number",
+        "vendor_type_lookup_code",
+        "enabled_flag",
+        "creation_date",
+        "last_update_date"
+      ],
+      "hash": "sha256:6fbb4896a2f179b6d480309d85eafb436b78aa101b30e866d3db9080db7d691a",
+      "row_count": 427,
+      "size_bytes": 35083
+    },
+    "ebs_ap_suppliers.csv.manifest": {
+      "columns": null,
+      "hash": "sha256:b24d1497d253a10f55207170c2310c41aad4fc315bf07edd80c7adb69bb40f01",
+      "row_count": null,
+      "size_bytes": 1233
+    }
+  },
+  "version": "1.0"
+}

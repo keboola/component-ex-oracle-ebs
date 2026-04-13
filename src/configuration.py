@@ -1,26 +1,80 @@
-import logging
+from enum import StrEnum
 
 from keboola.component.exceptions import UserException
-from pydantic import BaseModel, Field, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
+
+
+class ExtractionMode(StrEnum):
+    PRESET = "preset"
+    CUSTOM = "custom"
+
+
+class SourceConfig(BaseModel):
+    extraction_mode: ExtractionMode = ExtractionMode.PRESET
+    module: str = ""
+    entity: str = ""
+    org_id: int | None = None
+    ledger_id: int | None = None
+    custom_query: str = ""
+
+
+class DestinationConfig(BaseModel):
+    output_table: str = ""
+    incremental: bool = False
+    primary_key: list[str] = Field(default_factory=list)
 
 
 class Configuration(BaseModel):
-    print_hello: bool
-    api_token: str = Field(alias="#api_token")
+    model_config = ConfigDict(populate_by_name=True, extra="ignore")
+
+    # Connection fields — flattened from configSchema "connection" block
+    db_host: str = ""
+    db_port: int = 1521
+    db_service_name: str = ""
+    db_user: str = Field(alias="#db_user", default="")
+    db_password: str = Field(alias="#db_password", default="")
+
+    # Row-level extraction config
+    source: SourceConfig = Field(default_factory=SourceConfig)
+    destination: DestinationConfig = Field(default_factory=DestinationConfig)
+
     debug: bool = False
 
-    def __init__(self, **data):
+    @model_validator(mode="before")
+    @classmethod
+    def _flatten_connection(cls, data: dict) -> dict:
+        if isinstance(data, dict) and "connection" in data:
+            conn = data.pop("connection")
+            if isinstance(conn, dict):
+                data = {**data, **conn}
+        return data
+
+    def __init__(self, **data: object) -> None:
         try:
             super().__init__(**data)
         except ValidationError as e:
-            error_messages = [f"{err['loc'][0]}: {err['msg']}" for err in e.errors()]
-            raise UserException(f"Validation Error: {', '.join(error_messages)}")
+            error_messages = [f"{'.'.join(str(loc) for loc in err['loc'])}: {err['msg']}" for err in e.errors()]
+            raise UserException(f"Configuration error: {', '.join(error_messages)}")
 
-        if self.debug:
-            logging.debug("Component will run in Debug mode")
+    def validate_connection(self) -> None:
+        if not self.db_host:
+            raise UserException("'db_host' is required in connection settings.")
+        if not self.db_service_name:
+            raise UserException("'db_service_name' is required in connection settings.")
+        if not self.db_user:
+            raise UserException("'db_user' is required in connection settings.")
+        if not self.db_password:
+            raise UserException("'db_password' is required in connection settings.")
 
-    @field_validator("api_token")
-    def token_must_be_uppercase(cls, v):
-        if not v.isupper():
-            raise UserException("API token must be uppercase")
-        return v
+    def validate_row(self) -> None:
+        self.validate_connection()
+        if self.source.extraction_mode == ExtractionMode.PRESET:
+            if not self.source.module:
+                raise UserException("'module' is required in preset mode.")
+            if not self.source.entity:
+                raise UserException("'entity' is required in preset mode.")
+        else:
+            if not self.source.custom_query:
+                raise UserException("'custom_query' is required in custom mode.")
+        if not self.destination.output_table:
+            raise UserException("'output_table' is required.")

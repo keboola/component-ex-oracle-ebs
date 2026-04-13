@@ -1,0 +1,136 @@
+[
+  {
+    "name": "01_testConnection",
+    "description": "Sync action: test database connection",
+    "config": {
+      "action": "testConnection",
+      "parameters": {
+        "connection": {
+          "db_host": "PLACEHOLDER",
+          "db_port": 1521,
+          "db_service_name": "PLACEHOLDER",
+          "#db_user": "PLACEHOLDER",
+          "#db_password": "PLACEHOLDER"
+        }
+      }
+    }
+  },
+  {
+    "name": "02_listModules",
+    "description": "Sync action: list available EBS modules (static, no DB call)",
+    "config": {
+      "action": "listModules",
+      "parameters": {
+        "connection": {
+          "db_host": "PLACEHOLDER",
+          "db_port": 1521,
+          "db_service_name": "PLACEHOLDER",
+          "#db_user": "PLACEHOLDER",
+          "#db_password": "PLACEHOLDER"
+        }
+      }
+    }
+  },
+  {
+    "name": "03_listOperatingUnits",
+    "description": "Sync action: list operating units from EBS",
+    "config": {
+      "action": "listOperatingUnits",
+      "parameters": {
+        "connection": {
+          "db_host": "PLACEHOLDER",
+          "db_port": 1521,
+          "db_service_name": "PLACEHOLDER",
+          "#db_user": "PLACEHOLDER",
+          "#db_password": "PLACEHOLDER"
+        }
+      }
+    }
+  },
+  {
+    "name": "04_listLedgers",
+    "description": "Sync action: list GL ledgers from EBS",
+    "config": {
+      "action": "listLedgers",
+      "parameters": {
+        "connection": {
+          "db_host": "PLACEHOLDER",
+          "db_port": 1521,
+          "db_service_name": "PLACEHOLDER",
+          "#db_user": "PLACEHOLDER",
+          "#db_password": "PLACEHOLDER"
+        }
+      }
+    }
+  },
+  {
+    "name": "05_listEntities_ap",
+    "description": "Sync action: list AP module entities",
+    "config": {
+      "action": "listEntities",
+      "parameters": {
+        "connection": {
+          "db_host": "PLACEHOLDER",
+          "db_port": 1521,
+          "db_service_name": "PLACEHOLDER",
+          "#db_user": "PLACEHOLDER",
+          "#db_password": "PLACEHOLDER"
+        },
+        "source": {
+          "module": "ap"
+        }
+      }
+    }
+  },
+  {
+    "name": "06_run_preset_ap_suppliers",
+    "description": "Preset extraction: AP Suppliers (small table)",
+    "config": {
+      "action": "run",
+      "parameters": {
+        "connection": {
+          "db_host": "PLACEHOLDER",
+          "db_port": 1521,
+          "db_service_name": "PLACEHOLDER",
+          "#db_user": "PLACEHOLDER",
+          "#db_password": "PLACEHOLDER"
+        },
+        "source": {
+          "extraction_mode": "preset",
+          "module": "ap",
+          "entity": "ap_suppliers"
+        },
+        "destination": {
+          "output_table": "ebs_ap_suppliers",
+          "incremental": false,
+          "primary_key": ["VENDOR_ID"]
+        }
+      }
+    }
+  },
+  {
+    "name": "07_run_custom_query",
+    "description": "Custom SQL query: select 10 users from fnd_user",
+    "config": {
+      "action": "run",
+      "parameters": {
+        "connection": {
+          "db_host": "PLACEHOLDER",
+          "db_port": 1521,
+          "db_service_name": "PLACEHOLDER",
+          "#db_user": "PLACEHOLDER",
+          "#db_password": "PLACEHOLDER"
+        },
+        "source": {
+          "extraction_mode": "custom",
+          "custom_query": "SELECT user_id, user_name, email_address, creation_date FROM apps.fnd_user WHERE ROWNUM <= 10 ORDER BY user_id"
+        },
+        "destination": {
+          "output_table": "ebs_fnd_users_sample",
+          "incremental": false,
+          "primary_key": ["USER_ID"]
+        }
+      }
+    }
+  }
+]
