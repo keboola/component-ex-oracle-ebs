@@ -1,0 +1,29 @@
+{
+  "files": {},
+  "hash_algorithm": "sha256",
+  "tables": {
+    "ebs_tca_cust_accounts.csv": {
+      "columns": [
+        "cust_account_id",
+        "account_number",
+        "account_name",
+        "status",
+        "customer_class_code",
+        "party_name",
+        "party_type",
+        "creation_date",
+        "last_update_date"
+      ],
+      "hash": "sha256:486e7d3e0de65064811d1f52ffffb649ac16934105216eddfdf3d7f0d7974758",
+      "row_count": 1055,
+      "size_bytes": 95783
+    },
+    "ebs_tca_cust_accounts.csv.manifest": {
+      "columns": null,
+      "hash": "sha256:b1da7a0e361df51dcb2fed8f4ab8b3cd03096103c88d3f5464e891c4c123793c",
+      "row_count": null,
+      "size_bytes": 1529
+    }
+  },
+  "version": "1.0"
+}

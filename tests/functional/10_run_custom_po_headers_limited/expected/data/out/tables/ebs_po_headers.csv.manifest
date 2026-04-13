@@ -1,0 +1,73 @@
+{
+  "incremental": false,
+  "write_always": false,
+  "delimiter": ",",
+  "enclosure": "\"",
+  "manifest_type": "out",
+  "has_header": true,
+  "schema": [
+    {
+      "name": "po_header_id",
+      "data_type": {
+        "base": {
+          "type": "NUMERIC"
+        }
+      },
+      "primary_key": true
+    },
+    {
+      "name": "po_number",
+      "data_type": {
+        "base": {
+          "type": "STRING"
+        }
+      },
+      "nullable": true
+    },
+    {
+      "name": "type_lookup_code",
+      "data_type": {
+        "base": {
+          "type": "STRING"
+        }
+      },
+      "nullable": true
+    },
+    {
+      "name": "authorization_status",
+      "data_type": {
+        "base": {
+          "type": "STRING"
+        }
+      },
+      "nullable": true
+    },
+    {
+      "name": "vendor_name",
+      "data_type": {
+        "base": {
+          "type": "STRING"
+        }
+      },
+      "nullable": true
+    },
+    {
+      "name": "currency_code",
+      "data_type": {
+        "base": {
+          "type": "STRING"
+        }
+      },
+      "nullable": true
+    },
+    {
+      "name": "org_id",
+      "data_type": {
+        "base": {
+          "type": "NUMERIC"
+        }
+      },
+      "nullable": true
+    }
+  ]
+}

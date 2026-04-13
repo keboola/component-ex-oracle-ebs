@@ -1,0 +1,21 @@
+{
+  "action": "run",
+  "parameters": {
+    "connection": {
+      "db_host": "PLACEHOLDER",
+      "db_port": 1521,
+      "db_service_name": "PLACEHOLDER",
+      "#db_user": "PLACEHOLDER",
+      "#db_password": "PLACEHOLDER"
+    },
+    "source": {
+      "extraction_mode": "preset",
+      "module": "ap",
+      "entity": "nonexistent_entity"
+    },
+    "destination": {
+      "output_table": "should_not_exist",
+      "incremental": false
+    }
+  }
+}

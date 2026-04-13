@@ -6,19 +6,19 @@
       "level": "INFO",
       "logger": "root",
       "message": "Preset extraction: ap/ap_suppliers \u2192 ebs_ap_suppliers",
-      "timestamp": "2026-04-13T13:55:03.899Z"
+      "timestamp": "2026-04-13T14:28:18.129Z"
     },
     {
       "level": "INFO",
       "logger": "root",
       "message": "Query returned 426 rows, 7 columns",
-      "timestamp": "2026-04-13T13:55:04.192Z"
+      "timestamp": "2026-04-13T14:28:18.422Z"
     },
     {
       "level": "INFO",
       "logger": "root",
       "message": "Wrote 426 rows to ebs_ap_suppliers",
-      "timestamp": "2026-04-13T13:55:04.222Z"
+      "timestamp": "2026-04-13T14:28:18.451Z"
     }
   ]
 }

@@ -1,0 +1,27 @@
+{
+  "files": {},
+  "hash_algorithm": "sha256",
+  "tables": {
+    "ebs_po_headers.csv": {
+      "columns": [
+        "po_header_id",
+        "po_number",
+        "type_lookup_code",
+        "authorization_status",
+        "vendor_name",
+        "currency_code",
+        "org_id"
+      ],
+      "hash": "sha256:01cec06870e0c71b2dd85d5470bad438b93083ff4db0063ecea46ef592e38bdf",
+      "row_count": 51,
+      "size_bytes": 2760
+    },
+    "ebs_po_headers.csv.manifest": {
+      "columns": null,
+      "hash": "sha256:a85f0bef92df45f27c677d450f94b5bde6785be7cdfb6435f70cf582b74b19ef",
+      "row_count": null,
+      "size_bytes": 1224
+    }
+  },
+  "version": "1.0"
+}

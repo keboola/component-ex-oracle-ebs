@@ -1,0 +1,10 @@
+{
+  "_metadata": {"db_driver": "oracledb", "freeze_time": null, "keboola_db_vcr_version": "0.1.0", "keboola_vcr_version": "0.5.0", "recorded_at": "2026-04-13T14:28:20.978929+00:00"},
+  "interactions": [
+
+  ],
+  "db_interactions": [
+    {"sql_normalized": "SELECT * FROM APPS.NONEXISTENT_TABLE_XYZ", "params_hash": "99914b932bd37a50b983c5e7c90ae93b", "description": null, "rows": [], "error": "ORA-00942: table or view does not exist\nHelp: https://docs.oracle.com/error-help/db/ora-00942/"}
+  ],
+  "version": 1
+}

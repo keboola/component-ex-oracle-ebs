@@ -1,0 +1,27 @@
+{
+  "files": {},
+  "hash_algorithm": "sha256",
+  "tables": {
+    "ebs_gl_code_combinations.csv": {
+      "columns": [
+        "code_combination_id",
+        "chart_of_accounts_id",
+        "segment1",
+        "segment2",
+        "segment3",
+        "account_type",
+        "enabled_flag"
+      ],
+      "hash": "sha256:90c4578a6457c87ac41de5938a56367be9a02b4df8b12b8dc8ab0bfd5aa255f9",
+      "row_count": 51,
+      "size_bytes": 1525
+    },
+    "ebs_gl_code_combinations.csv.manifest": {
+      "columns": null,
+      "hash": "sha256:eb4b86d5b493b9c77a9ea8940b0aeeb4b7cd9f295f3096d3f57596d5b1588f1f",
+      "row_count": null,
+      "size_bytes": 1224
+    }
+  },
+  "version": "1.0"
+}

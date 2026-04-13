@@ -1,0 +1,23 @@
+{
+  "action": "run",
+  "parameters": {
+    "connection": {
+      "db_host": "PLACEHOLDER",
+      "db_port": 1521,
+      "db_service_name": "PLACEHOLDER",
+      "#db_user": "PLACEHOLDER",
+      "#db_password": "PLACEHOLDER"
+    },
+    "source": {
+      "extraction_mode": "custom",
+      "custom_query": "SELECT ct.customer_trx_id, ct.trx_number, ct.trx_date, hp.party_name AS customer_name, ct.invoice_currency_code, ct.org_id FROM apps.ra_customer_trx_all ct LEFT JOIN apps.hz_cust_accounts ca ON ct.bill_to_customer_id = ca.cust_account_id LEFT JOIN apps.hz_parties hp ON ca.party_id = hp.party_id WHERE ct.org_id = 204 AND ROWNUM <= 50"
+    },
+    "destination": {
+      "output_table": "ebs_ar_invoices",
+      "incremental": false,
+      "primary_key": [
+        "CUSTOMER_TRX_ID"
+      ]
+    }
+  }
+}

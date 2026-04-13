@@ -1,1 +1,1 @@
-Configuration description.
+Configure the Oracle database connection (host, port, service name, credentials), then add extraction rows. Each row extracts one table or query result into Keboola Storage. Use preset mode for guided EBS module extraction, or custom mode for any SQL query.

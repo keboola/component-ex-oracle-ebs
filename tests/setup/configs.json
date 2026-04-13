@@ -17,7 +17,7 @@
   },
   {
     "name": "02_listModules",
-    "description": "Sync action: list available EBS modules (static, no DB call)",
+    "description": "Sync action: list available EBS modules (static)",
     "config": {
       "action": "listModules",
       "parameters": {
@@ -84,7 +84,7 @@
   },
   {
     "name": "06_run_preset_ap_suppliers",
-    "description": "Preset extraction: AP Suppliers (small table)",
+    "description": "Preset: AP Suppliers (small non-org table, 426 rows)",
     "config": {
       "action": "run",
       "parameters": {
@@ -110,7 +110,7 @@
   },
   {
     "name": "07_run_custom_query",
-    "description": "Custom SQL query: select 10 users from fnd_user",
+    "description": "Custom: select 10 users from fnd_user",
     "config": {
       "action": "run",
       "parameters": {
@@ -129,6 +129,206 @@
           "output_table": "ebs_fnd_users_sample",
           "incremental": false,
           "primary_key": ["USER_ID"]
+        }
+      }
+    }
+  },
+  {
+    "name": "08_run_custom_gl_code_combinations",
+    "description": "Custom: GL Code Combinations limited to 50 rows",
+    "config": {
+      "action": "run",
+      "parameters": {
+        "connection": {
+          "db_host": "PLACEHOLDER",
+          "db_port": 1521,
+          "db_service_name": "PLACEHOLDER",
+          "#db_user": "PLACEHOLDER",
+          "#db_password": "PLACEHOLDER"
+        },
+        "source": {
+          "extraction_mode": "custom",
+          "custom_query": "SELECT code_combination_id, chart_of_accounts_id, segment1, segment2, segment3, account_type, enabled_flag FROM apps.gl_code_combinations WHERE enabled_flag = 'Y' AND ROWNUM <= 50"
+        },
+        "destination": {
+          "output_table": "ebs_gl_code_combinations",
+          "incremental": false,
+          "primary_key": ["CODE_COMBINATION_ID"]
+        }
+      }
+    }
+  },
+  {
+    "name": "09_run_preset_tca_cust_accounts",
+    "description": "Preset: TCA Customer Accounts with party JOIN",
+    "config": {
+      "action": "run",
+      "parameters": {
+        "connection": {
+          "db_host": "PLACEHOLDER",
+          "db_port": 1521,
+          "db_service_name": "PLACEHOLDER",
+          "#db_user": "PLACEHOLDER",
+          "#db_password": "PLACEHOLDER"
+        },
+        "source": {
+          "extraction_mode": "preset",
+          "module": "tca",
+          "entity": "hz_cust_accounts"
+        },
+        "destination": {
+          "output_table": "ebs_tca_cust_accounts",
+          "incremental": false,
+          "primary_key": ["CUST_ACCOUNT_ID"]
+        }
+      }
+    }
+  },
+  {
+    "name": "10_run_custom_po_headers_limited",
+    "description": "Custom: PO Headers with vendor JOIN, limited to 50 rows",
+    "config": {
+      "action": "run",
+      "parameters": {
+        "connection": {
+          "db_host": "PLACEHOLDER",
+          "db_port": 1521,
+          "db_service_name": "PLACEHOLDER",
+          "#db_user": "PLACEHOLDER",
+          "#db_password": "PLACEHOLDER"
+        },
+        "source": {
+          "extraction_mode": "custom",
+          "custom_query": "SELECT ph.po_header_id, ph.segment1 AS po_number, ph.type_lookup_code, ph.authorization_status, s.vendor_name, ph.currency_code, ph.org_id FROM apps.po_headers_all ph LEFT JOIN apps.po_vendors s ON ph.vendor_id = s.vendor_id WHERE ph.org_id = 204 AND ROWNUM <= 50"
+        },
+        "destination": {
+          "output_table": "ebs_po_headers",
+          "incremental": false,
+          "primary_key": ["PO_HEADER_ID"]
+        }
+      }
+    }
+  },
+  {
+    "name": "11_run_custom_ar_invoices_limited",
+    "description": "Custom: AR Invoices with customer JOIN, limited to 50 rows",
+    "config": {
+      "action": "run",
+      "parameters": {
+        "connection": {
+          "db_host": "PLACEHOLDER",
+          "db_port": 1521,
+          "db_service_name": "PLACEHOLDER",
+          "#db_user": "PLACEHOLDER",
+          "#db_password": "PLACEHOLDER"
+        },
+        "source": {
+          "extraction_mode": "custom",
+          "custom_query": "SELECT ct.customer_trx_id, ct.trx_number, ct.trx_date, hp.party_name AS customer_name, ct.invoice_currency_code, ct.org_id FROM apps.ra_customer_trx_all ct LEFT JOIN apps.hz_cust_accounts ca ON ct.bill_to_customer_id = ca.cust_account_id LEFT JOIN apps.hz_parties hp ON ca.party_id = hp.party_id WHERE ct.org_id = 204 AND ROWNUM <= 50"
+        },
+        "destination": {
+          "output_table": "ebs_ar_invoices",
+          "incremental": false,
+          "primary_key": ["CUSTOMER_TRX_ID"]
+        }
+      }
+    }
+  },
+  {
+    "name": "12_run_custom_query_with_join",
+    "description": "Custom: AP invoices with supplier names, limited to 20 rows",
+    "config": {
+      "action": "run",
+      "parameters": {
+        "connection": {
+          "db_host": "PLACEHOLDER",
+          "db_port": 1521,
+          "db_service_name": "PLACEHOLDER",
+          "#db_user": "PLACEHOLDER",
+          "#db_password": "PLACEHOLDER"
+        },
+        "source": {
+          "extraction_mode": "custom",
+          "custom_query": "SELECT i.invoice_id, i.invoice_num, i.invoice_amount, s.vendor_name FROM apps.ap_invoices_all i LEFT JOIN apps.ap_suppliers s ON i.vendor_id = s.vendor_id WHERE i.org_id = 204 AND ROWNUM <= 20"
+        },
+        "destination": {
+          "output_table": "ebs_custom_ap_with_vendor",
+          "incremental": false,
+          "primary_key": ["INVOICE_ID"]
+        }
+      }
+    }
+  },
+  {
+    "name": "13_error_unknown_preset",
+    "description": "Error: unknown module/entity combination should fail (exit 1)",
+    "config": {
+      "action": "run",
+      "parameters": {
+        "connection": {
+          "db_host": "PLACEHOLDER",
+          "db_port": 1521,
+          "db_service_name": "PLACEHOLDER",
+          "#db_user": "PLACEHOLDER",
+          "#db_password": "PLACEHOLDER"
+        },
+        "source": {
+          "extraction_mode": "preset",
+          "module": "ap",
+          "entity": "nonexistent_entity"
+        },
+        "destination": {
+          "output_table": "should_not_exist",
+          "incremental": false
+        }
+      }
+    }
+  },
+  {
+    "name": "14_error_missing_module",
+    "description": "Error: preset with empty module should fail with UserException (exit 1)",
+    "config": {
+      "action": "run",
+      "parameters": {
+        "connection": {
+          "db_host": "PLACEHOLDER",
+          "db_port": 1521,
+          "db_service_name": "PLACEHOLDER",
+          "#db_user": "PLACEHOLDER",
+          "#db_password": "PLACEHOLDER"
+        },
+        "source": {
+          "extraction_mode": "preset",
+          "module": "",
+          "entity": ""
+        },
+        "destination": {
+          "output_table": "should_not_exist",
+          "incremental": false
+        }
+      }
+    }
+  },
+  {
+    "name": "15_error_invalid_custom_query",
+    "description": "Error: invalid SQL should fail with UserException (exit 1)",
+    "config": {
+      "action": "run",
+      "parameters": {
+        "connection": {
+          "db_host": "PLACEHOLDER",
+          "db_port": 1521,
+          "db_service_name": "PLACEHOLDER",
+          "#db_user": "PLACEHOLDER",
+          "#db_password": "PLACEHOLDER"
+        },
+        "source": {
+          "extraction_mode": "custom",
+          "custom_query": "SELECT * FROM apps.nonexistent_table_xyz"
+        },
+        "destination": {
+          "output_table": "should_not_exist",
+          "incremental": false
         }
       }
     }
