@@ -14,4 +14,6 @@ jobs:
       vendor: "keboola"
       test_build_target: "test"
       docker_build_target: "production"
+      tag: "0.0.2"
+      update_properties: true
     secrets: inherit
