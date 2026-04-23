@@ -8,12 +8,13 @@ on:
 
 jobs:
   ci:
-    uses: keboola/component-ci/.github/workflows/component-pipeline.yml@master
+    uses: keboola/component-ci/.github/workflows/component-pipeline.yml@feature/deploy-ready-override
     with:
       app_id: "keboola.ex-oracle-ebs"
       vendor: "keboola"
       test_build_target: "test"
       docker_build_target: "production"
-      tag: "0.0.2"
+      tag: "0.0.1"
       update_properties: true
+      deploy_ready: true
     secrets: inherit
