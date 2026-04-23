@@ -6,19 +6,19 @@
       "level": "INFO",
       "logger": "root",
       "message": "Custom query \u2192 ebs_po_headers",
-      "timestamp": "2026-04-13T14:28:19.609Z"
+      "timestamp": "2026-04-23T08:40:21.172Z"
     },
     {
       "level": "INFO",
       "logger": "root",
       "message": "Query returned 50 rows, 7 columns",
-      "timestamp": "2026-04-13T14:28:19.884Z"
+      "timestamp": "2026-04-23T08:40:22.733Z"
     },
     {
       "level": "INFO",
       "logger": "root",
       "message": "Wrote 50 rows to ebs_po_headers",
-      "timestamp": "2026-04-13T14:28:19.911Z"
+      "timestamp": "2026-04-23T08:40:22.762Z"
     }
   ]
 }

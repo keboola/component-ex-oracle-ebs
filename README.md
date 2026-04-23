@@ -1,6 +1,14 @@
 # Oracle E-Business Suite Extractor
 
-Extract data from Oracle E-Business Suite via direct database connection using the `oracledb` thin driver.
+Extract data from Oracle E-Business Suite via direct database connection using the `oracledb` driver.
+
+## Requirements
+
+The component ships with Oracle Instant Client Basic Light (~50 MB) embedded in the Docker image so it connects out of the box against any supported Oracle EBS version — including older installations that only advertise the legacy 10G password verifier or run with `sec_case_sensitive_logon = FALSE`. No Oracle client installation is required on customer infrastructure; the component speaks to the EBS database directly.
+
+Internally, `python-oracledb` runs in **thick mode** when the bundled Instant Client is loadable, and falls back to **thin mode** otherwise. Thick mode transparently handles the full range of Oracle authentication protocols (10G, 11G, 12C).
+
+Oracle Instant Client is distributed under the [Oracle Free Use Terms and Conditions (FUTC)](https://www.oracle.com/downloads/licenses/oracle-free-license.html) and is freely redistributable in third-party applications.
 
 ## Features
 

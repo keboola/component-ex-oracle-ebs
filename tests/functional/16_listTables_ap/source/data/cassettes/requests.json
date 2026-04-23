@@ -1,10 +1,10 @@
 {
-  "_metadata": {"db_driver": "oracledb", "freeze_time": null, "keboola_db_vcr_version": "0.1.0", "keboola_vcr_version": "0.5.0", "recorded_at": "2026-04-13T14:52:42.173996+00:00"},
+  "_metadata": {"db_driver": "oracledb", "freeze_time": null, "keboola_db_vcr_version": "0.5.0", "keboola_vcr_version": "0.5.0", "recorded_at": "2026-04-23T08:40:24.246357+00:00"},
   "interactions": [
 
   ],
   "db_interactions": [
-    {"sql_normalized": "SELECT TABLE_NAME FROM ALL_TABLES WHERE OWNER = 'APPS' AND TABLE_NAME LIKE :PREFIX ORDER BY TABLE_NAME", "params_hash": "27e6e96328ea9bc6fab32d2c2e3307e8", "description": [["TABLE_NAME", "<DbType DB_TYPE_VARCHAR>"]], "rows": [["AP_6050423_EMP_VENDOR_TEMP"], ["AP_INVOICE_DISTRIBUTIONS_GT"]]}
+    {"sql_normalized": "SELECT TABLE_NAME FROM ALL_TABLES WHERE OWNER = 'APPS' AND TABLE_NAME LIKE :PREFIX ORDER BY TABLE_NAME", "params_hash": "70ed9444fbe05d69ff952bf849bab96fc478b26ac4a7075e2054cd0025c41d88", "description": [["TABLE_NAME", "<DbType DB_TYPE_VARCHAR>"]], "rows": [["AP_6050423_EMP_VENDOR_TEMP"], ["AP_INVOICE_DISTRIBUTIONS_GT"]]}
   ],
   "version": 1
 }

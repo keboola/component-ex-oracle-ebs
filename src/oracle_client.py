@@ -1,9 +1,61 @@
+"""Oracle EBS database client for read (query) operations.
+
+Uses oracledb in thick mode when Oracle Instant Client is available
+(required for Oracle EBS servers with `sec_case_sensitive_logon=FALSE` or
+legacy 10G password verifiers), otherwise falls back to thin mode.
+"""
+
 import logging
+import os
 
 import oracledb
 from keboola.component.exceptions import UserException
 
 FETCH_SIZE = 5000
+
+# Oracle Instant Client search order. Docker image installs to /opt/oracle/instantclient;
+# local dev commonly uses ~/oracle/instantclient_<ver>. Override with ORACLE_CLIENT_LIB_DIR.
+_INSTANT_CLIENT_PATHS = [
+    os.environ.get("ORACLE_CLIENT_LIB_DIR", ""),
+    "/opt/oracle/instantclient",
+    os.path.expanduser("~/oracle/instantclient_23_3"),
+    os.path.expanduser("~/oracle/instantclient"),
+]
+
+
+def _init_thick_mode_if_available() -> bool:
+    """Enable oracledb thick mode if Instant Client is installed. Returns True on success.
+
+    Thick mode is required for Oracle servers using `sec_case_sensitive_logon=FALSE` or
+    advertising only the 10G password verifier — both common on older Oracle EBS installs.
+
+    Set env var `ORACLE_THIN_MODE_ONLY=1` to skip thick-mode init (used by VCR recording
+    so the cursor wrapper in keboola-vcr's DB adapter — which is thin-only — keeps working).
+    """
+    if os.environ.get("ORACLE_THIN_MODE_ONLY") == "1":
+        logging.info("ORACLE_THIN_MODE_ONLY=1 set; using thin mode")
+        return False
+
+    for candidate in _INSTANT_CLIENT_PATHS:
+        if not candidate:
+            continue
+        if not os.path.isdir(candidate):
+            continue
+        try:
+            oracledb.init_oracle_client(lib_dir=candidate)
+            logging.info("Oracle thick mode enabled: lib_dir=%s", candidate)
+            return True
+        except oracledb.ProgrammingError:
+            # Already initialized — idempotent, still thick mode
+            return True
+        except Exception as e:
+            logging.debug("Failed to init Oracle thick mode with %s: %s", candidate, e)
+    logging.info("Oracle Instant Client not found; using thin mode")
+    return False
+
+
+# Initialize thick mode at import time — once per process.
+_init_thick_mode_if_available()
 
 
 class OracleEBSClient:
@@ -16,6 +68,17 @@ class OracleEBSClient:
         try:
             return oracledb.connect(user=self.user, password=self.password, dsn=self.dsn)
         except oracledb.DatabaseError as e:
+            msg = str(e)
+            if "DPY-3015" in msg:
+                raise UserException(
+                    f"Cannot connect to Oracle EBS at {self.dsn}: the user '{self.user}' has only "
+                    f"the legacy 10G password verifier and the bundled Oracle Instant Client failed "
+                    f"to load (falling back to thin mode). Ask your DBA to either:\n"
+                    f"  1. Reset the password so 11G/12C verifiers are generated:\n"
+                    f"     ALTER USER {self.user} IDENTIFIED BY <same-or-new-password>;\n"
+                    f"  2. Ensure sec_case_sensitive_logon is TRUE at the DB/PDB level.\n"
+                    f"Original error: {e}"
+                ) from e
             raise UserException(f"Cannot connect to Oracle EBS at {self.dsn}: {e}") from e
 
     def test_connection(self) -> dict[str, str]:

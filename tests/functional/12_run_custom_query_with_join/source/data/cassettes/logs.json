@@ -6,19 +6,19 @@
       "level": "INFO",
       "logger": "root",
       "message": "Custom query \u2192 ebs_custom_ap_with_vendor",
-      "timestamp": "2026-04-13T14:28:20.301Z"
+      "timestamp": "2026-04-23T08:40:23.134Z"
     },
     {
       "level": "INFO",
       "logger": "root",
       "message": "Query returned 20 rows, 4 columns",
-      "timestamp": "2026-04-13T14:28:20.575Z"
+      "timestamp": "2026-04-23T08:40:23.454Z"
     },
     {
       "level": "INFO",
       "logger": "root",
       "message": "Wrote 20 rows to ebs_custom_ap_with_vendor",
-      "timestamp": "2026-04-13T14:28:20.603Z"
+      "timestamp": "2026-04-23T08:40:23.484Z"
     }
   ]
 }

@@ -6,19 +6,19 @@
       "level": "INFO",
       "logger": "root",
       "message": "Preset extraction: tca/hz_cust_accounts \u2192 ebs_tca_cust_accounts",
-      "timestamp": "2026-04-13T14:28:19.197Z"
+      "timestamp": "2026-04-23T08:40:20.262Z"
     },
     {
       "level": "INFO",
       "logger": "root",
       "message": "Query returned 1054 rows, 9 columns",
-      "timestamp": "2026-04-13T14:28:19.517Z"
+      "timestamp": "2026-04-23T08:40:21.120Z"
     },
     {
       "level": "INFO",
       "logger": "root",
       "message": "Wrote 1054 rows to ebs_tca_cust_accounts",
-      "timestamp": "2026-04-13T14:28:19.554Z"
+      "timestamp": "2026-04-23T08:40:21.160Z"
     }
   ]
 }

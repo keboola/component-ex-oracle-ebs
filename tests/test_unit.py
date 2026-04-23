@@ -52,24 +52,28 @@ class TestGetPreset:
 class TestBuildQuery:
     def test_multi_org_with_org_id(self) -> None:
         preset = get_preset("ap", "ap_invoices")
+        assert preset is not None
         sql, params = build_query(preset, org_id=204)
         assert "org_id = :org_id" in sql
         assert params["org_id"] == 204
 
     def test_multi_org_without_org_id(self) -> None:
         preset = get_preset("ap", "ap_invoices")
+        assert preset is not None
         sql, params = build_query(preset, org_id=None)
         assert ":org_id" not in sql
         assert "org_id" not in params
 
     def test_ledger_query(self) -> None:
         preset = get_preset("gl", "gl_journal_lines")
+        assert preset is not None
         sql, params = build_query(preset, ledger_id=1)
         assert "ledger_id = :ledger_id" in sql
         assert params["ledger_id"] == 1
 
     def test_incremental_with_since(self) -> None:
         preset = get_preset("ap", "ap_invoices")
+        assert preset is not None
         since = datetime(2026, 1, 1)
         sql, params = build_query(preset, org_id=204, since_dt=since)
         assert "LAST_UPDATE_DATE > :since" in sql
@@ -77,6 +81,7 @@ class TestBuildQuery:
 
     def test_snapshot_table_ignores_since(self) -> None:
         preset = get_preset("gl", "gl_balances")
+        assert preset is not None
         assert preset["incremental_column"] is None
         sql, params = build_query(preset, ledger_id=1, since_dt=datetime(2026, 1, 1))
         assert ":since" not in sql
@@ -84,6 +89,7 @@ class TestBuildQuery:
 
     def test_no_filters_returns_base_query(self) -> None:
         preset = get_preset("tca", "hz_parties")
+        assert preset is not None
         sql, params = build_query(preset)
         assert params == {}
         assert "WHERE q." not in sql  # no outer WHERE wrapping
