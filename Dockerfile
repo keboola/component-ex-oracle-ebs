@@ -10,7 +10,7 @@ WORKDIR /code/
 # https://www.oracle.com/downloads/licenses/oracle-free-license.html
 ARG INSTANT_CLIENT_URL="https://download.oracle.com/otn_software/linux/instantclient/2380000/instantclient-basiclite-linux.x64-23.8.0.25.04.zip"
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        git curl ca-certificates libaio1 unzip \
+        git curl ca-certificates libaio1t64 unzip \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /opt/oracle \
     && curl -fsSL -o /tmp/ic.zip "${INSTANT_CLIENT_URL}" \
