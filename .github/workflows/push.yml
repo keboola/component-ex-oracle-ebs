@@ -6,15 +6,20 @@ on:
     tags:
       - "*"
 
+concurrency: ci-${{ github.ref }}
+
 jobs:
   ci:
-    uses: keboola/component-ci/.github/workflows/component-pipeline.yml@feature/deploy-ready-override
+    # One-off deploy to seed ECR so Developer Portal picks up the component for
+    # the first time (tags 0.0.1 and 0.0.2 already consumed by earlier runs).
+    # Pinned to the component-ci PR #7 SHA which introduces the `deploy_ready`
+    # input. Revert this branch + ref to @master after the first successful run.
+    uses: keboola/component-ci/.github/workflows/component-pipeline.yml@d5829c27b66ca8a15f7c3f6a99ada8d3df0d2e46
     with:
       app_id: "keboola.ex-oracle-ebs"
       vendor: "keboola"
       test_build_target: "test"
       docker_build_target: "production"
-      tag: "0.0.1"
-      update_properties: true
+      tag: "0.0.3"
       deploy_ready: true
     secrets: inherit
