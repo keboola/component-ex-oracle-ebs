@@ -12,8 +12,8 @@
         "extraction_mode": {
           "type": "string",
           "title": "Extraction Mode",
-          "enum": ["preset", "custom"],
-          "default": "preset",
+          "enum": ["Preset", "Custom"],
+          "default": "Preset",
           "propertyOrder": 1
         },
         "module": {
@@ -32,7 +32,7 @@
               "Trading Community (TCA)"
             ],
             "dependencies": {
-              "source.extraction_mode": "preset"
+              "source.extraction_mode": "Preset"
             }
           },
           "propertyOrder": 2
@@ -49,7 +49,7 @@
               "action": "listEntities"
             },
             "dependencies": {
-              "source.extraction_mode": "preset"
+              "source.extraction_mode": "Preset"
             }
           }
         },
@@ -65,7 +65,7 @@
               "action": "listOperatingUnits"
             },
             "dependencies": {
-              "source.extraction_mode": "preset"
+              "source.extraction_mode": "Preset"
             }
           }
         },
@@ -81,7 +81,7 @@
               "action": "listLedgers"
             },
             "dependencies": {
-              "source.extraction_mode": "preset",
+              "source.extraction_mode": "Preset",
               "source.module": "gl"
             }
           }
@@ -94,7 +94,7 @@
           "propertyOrder": 6,
           "options": {
             "dependencies": {
-              "source.extraction_mode": "custom"
+              "source.extraction_mode": "Custom"
             }
           }
         }
