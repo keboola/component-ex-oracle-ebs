@@ -4,7 +4,7 @@
       "db_host": "your-ebs-host.example.com",
       "db_port": 1521,
       "db_service_name": "EBSDB",
-      "#db_user": "your_readonly_user",
+      "db_user": "your_readonly_user",
       "#db_password": "your_password"
     },
     "source": {

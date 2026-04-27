@@ -41,7 +41,7 @@ Oracle Instant Client is distributed under the [Oracle Free Use Terms and Condit
 | `db_host` | Oracle database server hostname or IP |
 | `db_port` | Port (default: 1521) |
 | `db_service_name` | Oracle service name (e.g. `ebs_EBSDB`) |
-| `#db_user` | Database username (encrypted) |
+| `db_user` | Database username |
 | `#db_password` | Database password (encrypted) |
 
 ### Extraction Row (configRowSchema)

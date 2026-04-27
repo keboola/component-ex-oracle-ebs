@@ -103,7 +103,7 @@ class TestConfiguration:
                     "db_host": "localhost",
                     "db_port": 1521,
                     "db_service_name": "EBSDB",
-                    "#db_user": "user",
+                    "db_user": "user",
                     "#db_password": "pass",
                 },
                 "source": {"extraction_mode": "preset", "module": "ap", "entity": "ap_invoices"},
@@ -127,7 +127,7 @@ class TestConfiguration:
                 "connection": {
                     "db_host": "h",
                     "db_service_name": "s",
-                    "#db_user": "u",
+                    "db_user": "u",
                     "#db_password": "p",
                 },
                 "source": {"extraction_mode": "preset", "module": "", "entity": ""},
@@ -143,7 +143,7 @@ class TestConfiguration:
                 "connection": {
                     "db_host": "h",
                     "db_service_name": "s",
-                    "#db_user": "u",
+                    "db_user": "u",
                     "#db_password": "p",
                 },
                 "source": {"extraction_mode": "custom", "custom_query": ""},
