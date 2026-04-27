@@ -1,0 +1,13 @@
+{
+  "parameters": {
+    "source": {
+      "extraction_mode": "Preset",
+      "module": "tca",
+      "entity": "hz_cust_accounts"
+    },
+    "destination": {
+      "output_table": "ebs_tca_cust_accounts",
+      "incremental": false
+    }
+  }
+}

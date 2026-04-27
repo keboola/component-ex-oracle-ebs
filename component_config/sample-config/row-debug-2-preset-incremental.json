@@ -1,0 +1,15 @@
+{
+  "parameters": {
+    "source": {
+      "extraction_mode": "Preset",
+      "module": "ap",
+      "entity": "ap_invoices",
+      "org_id": 204
+    },
+    "destination": {
+      "output_table": "ebs_ap_invoices",
+      "incremental": true,
+      "primary_key": ["invoice_id"]
+    }
+  }
+}

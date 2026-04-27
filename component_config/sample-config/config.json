@@ -8,7 +8,7 @@
       "#db_password": "your_password"
     },
     "source": {
-      "extraction_mode": "preset",
+      "extraction_mode": "Preset",
       "module": "ap",
       "entity": "ap_invoices",
       "org_id": "204"
