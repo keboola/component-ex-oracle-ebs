@@ -9,7 +9,7 @@
       "#db_password": "PLACEHOLDER"
     },
     "source": {
-      "extraction_mode": "custom",
+      "extraction_mode": "Custom",
       "custom_query": "SELECT user_id, user_name, email_address, creation_date FROM apps.fnd_user WHERE ROWNUM <= 10 ORDER BY user_id"
     },
     "destination": {

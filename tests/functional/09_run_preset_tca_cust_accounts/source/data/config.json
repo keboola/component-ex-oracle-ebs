@@ -9,7 +9,7 @@
       "#db_password": "PLACEHOLDER"
     },
     "source": {
-      "extraction_mode": "preset",
+      "extraction_mode": "Preset",
       "module": "tca",
       "entity": "hz_cust_accounts"
     },

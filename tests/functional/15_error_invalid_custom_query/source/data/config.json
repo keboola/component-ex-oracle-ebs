@@ -9,7 +9,7 @@
       "#db_password": "PLACEHOLDER"
     },
     "source": {
-      "extraction_mode": "custom",
+      "extraction_mode": "Custom",
       "custom_query": "SELECT * FROM apps.nonexistent_table_xyz"
     },
     "destination": {

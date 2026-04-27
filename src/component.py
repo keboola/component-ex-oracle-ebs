@@ -12,26 +12,33 @@ from keboola.component.base import ComponentBase, sync_action
 from keboola.component.dao import BaseType, ColumnDefinition, SupportedDataTypes
 from keboola.component.exceptions import UserException
 from keboola.component.sync_actions import SelectElement
+from sshtunnel import BaseSSHTunnelForwarderError, SSHTunnelForwarder
 
 from configuration import Configuration, ExtractionMode
 from ebs_presets import build_query, get_entity_list, get_preset
 from oracle_client import OracleEBSClient
+from ssh_utils import SSHException, get_private_key
+
+LOCAL_BIND_HOST = "127.0.0.1"
 
 
 class Component(ComponentBase):
     def __init__(self) -> None:
         super().__init__()
         self.params = Configuration(**self.configuration.parameters)
+        self._ssh_tunnel: SSHTunnelForwarder | None = None
 
     def run(self) -> None:
         """Main execution — orchestrates the extraction workflow."""
         self.params.validate_row()
-        client = self._build_client()
-
-        if self.params.source.extraction_mode == ExtractionMode.PRESET:
-            self._run_preset(client)
-        else:
-            self._run_custom(client)
+        try:
+            client = self._build_client()
+            if self.params.source.extraction_mode == ExtractionMode.PRESET:
+                self._run_preset(client)
+            else:
+                self._run_custom(client)
+        finally:
+            self._stop_ssh_tunnel()
 
     # ── Sync Actions ──────────────────────────────────────────────
 
@@ -132,14 +139,60 @@ class Component(ComponentBase):
     # ── Helpers ───────────────────────────────────────────────────
 
     def _build_client(self) -> OracleEBSClient:
+        self._ensure_ssh_tunnel()
         p = self.params
+        host = p.db_host
+        port = p.db_port
+        if self._ssh_tunnel is not None and self._ssh_tunnel.is_active:
+            host = LOCAL_BIND_HOST
+            port = self._ssh_tunnel.local_bind_port
         return OracleEBSClient(
-            host=p.db_host,
-            port=p.db_port,
+            host=host,
+            port=port,
             service_name=p.db_service_name,
             user=p.db_user,
             password=p.db_password,
         )
+
+    def _ensure_ssh_tunnel(self) -> None:
+        ssh = self.params.ssh_options
+        if not ssh.enabled:
+            return
+        if self._ssh_tunnel is not None and self._ssh_tunnel.is_active:
+            return
+
+        try:
+            pkey = get_private_key(ssh.keys.private, None)
+        except SSHException as e:
+            raise UserException(f"Invalid SSH private key: {e}") from e
+
+        self._ssh_tunnel = SSHTunnelForwarder(
+            ssh_address_or_host=(ssh.ssh_host, ssh.ssh_port),
+            ssh_username=ssh.user,
+            ssh_pkey=pkey,
+            remote_bind_address=(self.params.db_host, self.params.db_port),
+            local_bind_address=(LOCAL_BIND_HOST, self.params.db_port),
+            ssh_config_file=None,
+            allow_agent=False,
+        )
+        try:
+            self._ssh_tunnel.start()
+        except BaseSSHTunnelForwarderError as e:
+            raise UserException("Failed to establish SSH connection. Recheck the SSH tunnel configuration.") from e
+        logging.info("SSH tunnel established to %s:%s via %s", self.params.db_host, self.params.db_port, ssh.ssh_host)
+
+    def _stop_ssh_tunnel(self) -> None:
+        tunnel = getattr(self, "_ssh_tunnel", None)
+        if tunnel is None:
+            return
+        try:
+            if tunnel.is_active:
+                tunnel.stop()
+        except Exception:  # noqa: BLE001 — best-effort teardown
+            logging.debug("SSH tunnel stop failed", exc_info=True)
+
+    def __del__(self) -> None:
+        self._stop_ssh_tunnel()
 
     def _get_since_datetime(self) -> datetime | None:
         if not self.params.destination.incremental:
