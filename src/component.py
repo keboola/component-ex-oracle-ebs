@@ -14,7 +14,7 @@ from keboola.component.exceptions import UserException
 from keboola.component.sync_actions import SelectElement
 
 from configuration import Configuration, ExtractionMode
-from ebs_presets import build_query, get_entity_list, get_module_list, get_preset
+from ebs_presets import build_query, get_entity_list, get_preset
 from oracle_client import OracleEBSClient
 
 
@@ -52,10 +52,6 @@ class Component(ComponentBase):
         self.params.validate_connection()
         rows = self._build_client().list_ledgers()
         return [SelectElement(value=str(r["LEDGER_ID"]), label=f"{r['NAME']} ({r['CURRENCY_CODE']})") for r in rows]
-
-    @sync_action("listModules")
-    def list_modules(self) -> list[SelectElement]:
-        return [SelectElement(value=m["value"], label=m["label"]) for m in get_module_list()]
 
     @sync_action("listEntities")
     def list_entities(self) -> list[SelectElement]:

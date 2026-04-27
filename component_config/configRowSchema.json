@@ -19,19 +19,23 @@
         "module": {
           "type": "string",
           "title": "EBS Module",
-          "format": "select",
-          "enum": [],
-          "propertyOrder": 2,
+          "enum": ["ap", "ar", "gl", "po", "inv", "hr", "om", "tca"],
           "options": {
-            "async": {
-              "label": "Load Modules",
-              "action": "listModules",
-              "autoload": true
-            },
+            "enum_titles": [
+              "Accounts Payable (AP)",
+              "Accounts Receivable (AR)",
+              "General Ledger (GL)",
+              "Purchasing (PO)",
+              "Inventory (INV)",
+              "Human Resources (HR)",
+              "Order Management (OM)",
+              "Trading Community (TCA)"
+            ],
             "dependencies": {
               "source.extraction_mode": "preset"
             }
-          }
+          },
+          "propertyOrder": 2
         },
         "entity": {
           "type": "string",
