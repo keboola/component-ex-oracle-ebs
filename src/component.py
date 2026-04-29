@@ -79,7 +79,12 @@ class Component(ComponentBase):
         module = self.params.source.module
         if not module:
             raise UserException("Select a module first, then reload tables.")
-        # Map module keys to Oracle table prefixes
+        # Module → Oracle EBS schema/table prefix. These are the conventional
+        # short codes for each EBS application area (Payables tables live under
+        # AP_, Receivables transactions under RA_, Inventory under MTL_ for
+        # Materials, Order Entry under OE_, Trading Community Architecture
+        # under HZ_, etc.). Oracle's authoritative table reference lives in
+        # the eTRM behind My Oracle Support; there is no equivalent public URL.
         prefix_map = {
             "ap": "AP_",
             "ar": "RA_",
