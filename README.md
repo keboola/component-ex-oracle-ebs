@@ -19,7 +19,7 @@ Oracle Instant Client is distributed under the [Oracle Free Use Terms and Condit
 | Incremental Loading | Delta extraction via `LAST_UPDATE_DATE` columns |
 | Multi-Org Filtering | Operating Unit picker for `org_id` filtering |
 | GL Ledger Picker | Ledger selection for General Ledger queries |
-| Sync Actions | Test connection, list operating units, list ledgers, list modules, list entities |
+| Sync Actions | Test connection, list operating units, list ledgers, list modules, list entities, list tables, validate query |
 
 ## Supported EBS Modules
 

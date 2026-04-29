@@ -82,6 +82,13 @@ class Configuration(BaseModel):
             raise UserException("'db_user' is required in connection settings.")
         if not self.db_password:
             raise UserException("'db_password' is required in connection settings.")
+        if self.ssh_options.enabled:
+            if not self.ssh_options.ssh_host:
+                raise UserException("'sshHost' is required when SSH tunnel is enabled.")
+            if not self.ssh_options.user:
+                raise UserException("SSH tunnel 'user' is required.")
+            if not self.ssh_options.keys.private:
+                raise UserException("SSH private key is required when SSH tunnel is enabled.")
 
     def validate_row(self) -> None:
         self.validate_connection()

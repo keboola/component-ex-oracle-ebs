@@ -66,8 +66,13 @@ class OracleEBSClient:
 
     def _connect(self) -> oracledb.Connection:
         try:
-            return oracledb.connect(user=self.user, password=self.password, dsn=self.dsn)
-        except oracledb.DatabaseError as e:
+            return oracledb.connect(
+                user=self.user,
+                password=self.password,
+                dsn=self.dsn,
+                tcp_connect_timeout=30,
+            )
+        except oracledb.Error as e:
             msg = str(e)
             if "DPY-3015" in msg:
                 raise UserException(
@@ -119,7 +124,7 @@ class OracleEBSClient:
 
     def validate_query(self, query: str) -> tuple[list[str], list[dict]]:
         """Run a query with ROWNUM <= 10 limit and return columns + sample rows."""
-        limited = f"SELECT * FROM ({query.rstrip(';').strip()}) WHERE ROWNUM <= 10"
+        limited = f"SELECT * FROM ({query.strip().rstrip(';').strip()}) WHERE ROWNUM <= 10"
         return self.execute_query(limited)
 
     def get_table_columns(self, table_name: str) -> list[dict]:
@@ -139,6 +144,9 @@ class OracleEBSClient:
         self, query: str, params: dict | None = None, fetch_size: int = FETCH_SIZE
     ) -> tuple[list[str], list[dict]]:
         """Execute a query and return (column_names, rows) using fetchmany streaming."""
+        # Oracle rejects trailing semicolons; strip once here so all callers
+        # (presets, custom mode, validate_query) behave the same.
+        query = query.strip().rstrip(";").strip()
         logging.debug("Executing query: %s", query[:200])
         try:
             with self._connect() as conn:
@@ -155,5 +163,5 @@ class OracleEBSClient:
                             all_rows.append(dict(zip(columns, raw_row, strict=False)))
                     logging.info("Query returned %d rows, %d columns", len(all_rows), len(columns))
                     return columns, all_rows
-        except oracledb.DatabaseError as e:
+        except oracledb.Error as e:
             raise UserException(f"Oracle query failed: {e}") from e

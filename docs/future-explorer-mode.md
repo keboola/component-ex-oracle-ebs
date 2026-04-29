@@ -11,7 +11,7 @@ Run the user's custom SQL query with a row limit and return column names + sampl
 Helps the user verify their query before running the full extraction.
 
 - Wraps query in `SELECT * FROM ({query}) WHERE ROWNUM <= 10`
-- Returns as sync action result: column names + sample data
+- Returns as sync action result: `{status, columns, rowCount, sampleRows}`
 - Triggered from a button in the custom SQL section of configRowSchema
 
 ### 2. List Tables (sync action)

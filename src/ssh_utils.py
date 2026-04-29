@@ -17,12 +17,13 @@ class SSHException(Exception):
     pass
 
 
-def get_private_key(input_key: str, private_key_password: str | None) -> paramiko.RSAKey:
+def get_private_key(input_key: str, private_key_password: str | None) -> paramiko.PKey:
     key = _get_decoded_key(input_key)
     try:
+        # PKey.from_private_key auto-detects RSA, ECDSA, and Ed25519 formats.
         if private_key_password:
-            return paramiko.RSAKey.from_private_key(StringIO(key), password=private_key_password)
-        return paramiko.RSAKey.from_private_key(StringIO(key))
+            return paramiko.PKey.from_private_key(StringIO(key), password=private_key_password)
+        return paramiko.PKey.from_private_key(StringIO(key))
     except paramiko.ssh_exception.SSHException as pkey_error:
         raise SSHException("Invalid private key") from pkey_error
 

@@ -6,7 +6,9 @@ Supports preset module/entity selection with pre-built SQL, or custom SQL querie
 
 import csv
 import logging
+from collections.abc import Callable
 from datetime import UTC, datetime
+from typing import TypeVar
 
 from keboola.component.base import ComponentBase, sync_action
 from keboola.component.dao import BaseType, ColumnDefinition, SupportedDataTypes
@@ -20,6 +22,8 @@ from oracle_client import OracleEBSClient
 from ssh_utils import SSHException, get_private_key
 
 LOCAL_BIND_HOST = "127.0.0.1"
+
+T = TypeVar("T")
 
 
 class Component(ComponentBase):
@@ -43,26 +47,27 @@ class Component(ComponentBase):
     # ── Sync Actions ──────────────────────────────────────────────
 
     @sync_action("testConnection")
-    def test_connection(self) -> None:
+    def test_connection(self) -> dict:
         self.params.validate_connection()
-        result = self._build_client().test_connection()
+        result = self._with_client(lambda c: c.test_connection())
         logging.info("Connection OK — %s", result["version"])
+        return {"status": "success", "version": result["version"]}
 
     @sync_action("listOperatingUnits")
     def list_operating_units(self) -> list[SelectElement]:
         self.params.validate_connection()
-        rows = self._build_client().list_operating_units()
+        rows = self._with_client(lambda c: c.list_operating_units())
         return [SelectElement(value=str(r["ORGANIZATION_ID"]), label=f"{r['NAME']}") for r in rows]
 
     @sync_action("listLedgers")
     def list_ledgers(self) -> list[SelectElement]:
         self.params.validate_connection()
-        rows = self._build_client().list_ledgers()
+        rows = self._with_client(lambda c: c.list_ledgers())
         return [SelectElement(value=str(r["LEDGER_ID"]), label=f"{r['NAME']} ({r['CURRENCY_CODE']})") for r in rows]
 
     @sync_action("listEntities")
     def list_entities(self) -> list[SelectElement]:
-        module = self.configuration.parameters.get("source", {}).get("module", "")
+        module = self.params.source.module
         if not module:
             raise UserException("Select a module first, then reload entities.")
         return [SelectElement(value=e["value"], label=e["label"]) for e in get_entity_list(module)]
@@ -71,7 +76,7 @@ class Component(ComponentBase):
     def list_tables(self) -> list[SelectElement]:
         """List EBS tables for a module prefix (e.g. AP → AP_INVOICES_ALL, AP_SUPPLIERS, ...)."""
         self.params.validate_connection()
-        module = self.configuration.parameters.get("source", {}).get("module", "")
+        module = self.params.source.module
         if not module:
             raise UserException("Select a module first, then reload tables.")
         # Map module keys to Oracle table prefixes
@@ -86,19 +91,24 @@ class Component(ComponentBase):
             "tca": "HZ_",
         }
         prefix = prefix_map.get(module, f"{module.upper()}_")
-        rows = self._build_client().list_module_tables(prefix)
+        rows = self._with_client(lambda c: c.list_module_tables(prefix))
         return [SelectElement(value=r["TABLE_NAME"], label=r["TABLE_NAME"]) for r in rows]
 
     @sync_action("validateQuery")
-    def validate_query(self) -> None:
-        """Run user's custom SQL with ROWNUM <= 10 and log column names + row count."""
+    def validate_query(self) -> dict:
+        """Run user's custom SQL with ROWNUM <= 10 and return column names + sample rows."""
         self.params.validate_connection()
-        query = self.configuration.parameters.get("source", {}).get("custom_query", "")
+        query = self.params.source.custom_query
         if not query:
             raise UserException("Enter a SQL query first.")
-        columns, rows = self._build_client().validate_query(query)
+        columns, rows = self._with_client(lambda c: c.validate_query(query))
         logging.info("Query valid — %d columns, %d sample rows", len(columns), len(rows))
-        logging.info("Columns: %s", ", ".join(columns))
+        return {
+            "status": "success",
+            "columns": columns,
+            "rowCount": len(rows),
+            "sampleRows": rows,
+        }
 
     # ── Extraction ────────────────────────────────────────────────
 
@@ -128,6 +138,9 @@ class Component(ComponentBase):
         dest = self.params.destination
         query = self.params.source.custom_query
 
+        if dest.incremental and not dest.primary_key:
+            raise UserException("'primary_key' is required when incremental loading is enabled in custom mode.")
+
         logging.info("Custom query → %s", dest.output_table)
         columns, rows = client.execute_query(query)
 
@@ -137,6 +150,21 @@ class Component(ComponentBase):
             self._save_state(dest.output_table)
 
     # ── Helpers ───────────────────────────────────────────────────
+
+    def _with_client(self, fn: Callable[[OracleEBSClient], T]) -> T:
+        """Build the client, run fn, and always tear down the SSH tunnel.
+
+        Converts unexpected exceptions to UserException so sync actions surface
+        clean errors to the UI instead of raw tracebacks.
+        """
+        try:
+            return fn(self._build_client())
+        except UserException:
+            raise
+        except Exception as e:
+            raise UserException(f"Action failed: {e}") from e
+        finally:
+            self._stop_ssh_tunnel()
 
     def _build_client(self) -> OracleEBSClient:
         self._ensure_ssh_tunnel()
@@ -190,9 +218,6 @@ class Component(ComponentBase):
                 tunnel.stop()
         except Exception:  # noqa: BLE001 — best-effort teardown
             logging.debug("SSH tunnel stop failed", exc_info=True)
-
-    def __del__(self) -> None:
-        self._stop_ssh_tunnel()
 
     def _get_since_datetime(self) -> datetime | None:
         if not self.params.destination.incremental:
