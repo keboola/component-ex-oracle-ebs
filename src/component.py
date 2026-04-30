@@ -6,8 +6,9 @@ Supports preset module/entity selection with pre-built SQL, or custom SQL querie
 
 import csv
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Iterable, Iterator
 from datetime import UTC, datetime
+from itertools import chain
 from typing import TypeVar
 
 from keboola.component.base import ComponentBase, sync_action
@@ -132,7 +133,7 @@ class Component(ComponentBase):
         pk = dest.primary_key or preset["default_primary_key"]
 
         logging.info("Preset extraction: %s/%s → %s", src.module, src.entity, output_table)
-        columns, rows = client.execute_query(sql, params=params)
+        columns, rows = client.execute_query_stream(sql, params=params)
 
         self._write_table(output_table, columns, rows, dest.incremental, pk)
 
@@ -147,7 +148,7 @@ class Component(ComponentBase):
             raise UserException("'primary_key' is required when incremental loading is enabled in custom mode.")
 
         logging.info("Custom query → %s", dest.output_table)
-        columns, rows = client.execute_query(query)
+        columns, rows = client.execute_query_stream(query)
 
         self._write_table(dest.output_table, columns, rows, dest.incremental, dest.primary_key)
 
@@ -243,16 +244,23 @@ class Component(ComponentBase):
         self,
         table_name: str,
         columns: list[str],
-        rows: list[dict],
+        rows: Iterable[dict],
         incremental: bool = False,
         primary_key: list[str] | None = None,
     ) -> None:
         pk = primary_key or []
         columns = _normalize_columns(columns)
-        rows = [{_normalize_col_name(k): v for k, v in row.items()} for row in rows]
         pk = [_normalize_col_name(k) for k in pk]
 
-        schema = _build_schema(columns, pk, rows)
+        # Peek the first row so we can infer the schema without buffering the
+        # whole result set. Stitch it back via itertools.chain so the CSV write
+        # below sees every row.
+        normalized_rows: Iterator[dict] = ({_normalize_col_name(k): v for k, v in row.items()} for row in rows)
+        first_row: dict | None = next(normalized_rows, None)
+        if first_row is not None:
+            normalized_rows = chain([first_row], normalized_rows)
+
+        schema = _build_schema(columns, pk, first_row)
         table_def = self.create_out_table_definition(
             f"{table_name}.csv",
             incremental=incremental,
@@ -261,15 +269,16 @@ class Component(ComponentBase):
             has_header=True,
         )
 
+        row_count = 0
         with open(table_def.full_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=columns, extrasaction="ignore")
             writer.writeheader()
-            for row in rows:
-                # Convert non-string values to strings for CSV
+            for row in normalized_rows:
                 writer.writerow({k: _to_csv_value(v) for k, v in row.items()})
+                row_count += 1
 
         self.write_manifest(table_def)
-        logging.info("Wrote %d rows to %s", len(rows), table_name)
+        logging.info("Wrote %d rows to %s", row_count, table_name)
 
 
 # ── Standalone utilities ─────────────────────────────────────────
@@ -293,11 +302,9 @@ def _to_csv_value(value: object) -> str:
     return str(value)
 
 
-def _build_schema(columns: list[str], primary_key: list[str], rows: list[dict]) -> dict[str, ColumnDefinition]:
-    """Infer column types from first non-empty row of data."""
-    sample: dict = {}
-    if rows:
-        sample = rows[0]
+def _build_schema(columns: list[str], primary_key: list[str], sample: dict | None) -> dict[str, ColumnDefinition]:
+    """Infer column types from a single sample row (or all-string when empty)."""
+    sample = sample or {}
 
     schema: dict[str, ColumnDefinition] = {}
     for col in columns:

@@ -7,6 +7,7 @@ legacy 10G password verifiers), otherwise falls back to thin mode.
 
 import logging
 import os
+from collections.abc import Iterator
 
 import oracledb
 from keboola.component.exceptions import UserException
@@ -36,11 +37,13 @@ def _init_thick_mode_if_available() -> bool:
         logging.info("ORACLE_THIN_MODE_ONLY=1 set; using thin mode")
         return False
 
+    tried: list[str] = []
     for candidate in _INSTANT_CLIENT_PATHS:
         if not candidate:
             continue
         if not os.path.isdir(candidate):
             continue
+        tried.append(candidate)
         try:
             oracledb.init_oracle_client(lib_dir=candidate)
             logging.info("Oracle thick mode enabled: lib_dir=%s", candidate)
@@ -49,8 +52,15 @@ def _init_thick_mode_if_available() -> bool:
             # Already initialized — idempotent, still thick mode
             return True
         except Exception as e:
-            logging.debug("Failed to init Oracle thick mode with %s: %s", candidate, e)
-    logging.info("Oracle Instant Client not found; using thin mode")
+            # Surface the real failure reason so the operator can fix it.
+            logging.warning("Failed to init Oracle thick mode with %s: %s", candidate, e)
+    if tried:
+        logging.warning(
+            "Oracle Instant Client directories were present but none loaded: %s. Using thin mode.",
+            ", ".join(tried),
+        )
+    else:
+        logging.info("Oracle Instant Client not found; using thin mode")
     return False
 
 
@@ -140,28 +150,56 @@ class OracleEBSClient:
         _cols, rows = self.execute_query(sql, params={"owner": owner, "table_name": tname})
         return rows
 
-    def execute_query(
+    def execute_query_stream(
         self, query: str, params: dict | None = None, fetch_size: int = FETCH_SIZE
-    ) -> tuple[list[str], list[dict]]:
-        """Execute a query and return (column_names, rows) using fetchmany streaming."""
-        # Oracle rejects trailing semicolons; strip once here so all callers
-        # (presets, custom mode, validate_query) behave the same.
+    ) -> tuple[list[str], Iterator[dict]]:
+        """Execute a query and return (column_names, generator yielding row dicts).
+
+        The generator owns the cursor and connection — it closes both when exhausted,
+        garbage-collected, or closed by the caller. Lets large result sets stream to
+        disk without buffering the whole table in memory.
+        """
         query = query.strip().rstrip(";").strip()
         logging.debug("Executing query: %s", query[:200])
         try:
-            with self._connect() as conn:
-                with conn.cursor() as cur:
-                    cur.arraysize = fetch_size
-                    cur.execute(query, parameters=params or {})
-                    columns = [desc[0].upper() for desc in cur.description]
-                    all_rows: list[dict] = []
-                    while True:
-                        batch = cur.fetchmany(fetch_size)
-                        if not batch:
-                            break
-                        for raw_row in batch:
-                            all_rows.append(dict(zip(columns, raw_row, strict=False)))
-                    logging.info("Query returned %d rows, %d columns", len(all_rows), len(columns))
-                    return columns, all_rows
+            conn = self._connect()
+            cur = conn.cursor()
+            cur.arraysize = fetch_size
+            cur.execute(query, parameters=params or {})
+            description = cur.description or []
+            columns = [desc[0].upper() for desc in description]
         except oracledb.Error as e:
             raise UserException(f"Oracle query failed: {e}") from e
+
+        def _row_iter() -> Iterator[dict]:
+            row_count = 0
+            try:
+                while True:
+                    batch = cur.fetchmany(fetch_size)
+                    if not batch:
+                        break
+                    for raw_row in batch:
+                        yield dict(zip(columns, raw_row, strict=False))
+                    row_count += len(batch)
+                logging.info("Query returned %d rows, %d columns", row_count, len(columns))
+            except oracledb.Error as e:
+                raise UserException(f"Oracle query failed: {e}") from e
+            finally:
+                try:
+                    cur.close()
+                finally:
+                    conn.close()
+
+        return columns, _row_iter()
+
+    def execute_query(
+        self, query: str, params: dict | None = None, fetch_size: int = FETCH_SIZE
+    ) -> tuple[list[str], list[dict]]:
+        """Execute a query and return (column_names, rows) materialized as a list.
+
+        Convenience wrapper around `execute_query_stream` for callers that need
+        the full result set in memory (sync actions, small lookups). Don't use
+        for the main extraction path — prefer streaming.
+        """
+        columns, rows_iter = self.execute_query_stream(query, params, fetch_size)
+        return columns, list(rows_iter)
