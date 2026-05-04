@@ -6,63 +6,122 @@ Supports preset module/entity selection with pre-built SQL, or custom SQL querie
 
 import csv
 import logging
+from collections.abc import Iterable, Iterator
+from contextlib import contextmanager
+from dataclasses import dataclass
 from datetime import UTC, datetime
+from itertools import chain
 
 from keboola.component.base import ComponentBase, sync_action
 from keboola.component.dao import BaseType, ColumnDefinition, SupportedDataTypes
 from keboola.component.exceptions import UserException
-from keboola.component.sync_actions import SelectElement
+from keboola.component.sync_actions import SelectElement, SyncActionResult
+from sshtunnel import BaseSSHTunnelForwarderError, SSHTunnelForwarder
 
 from configuration import Configuration, ExtractionMode
-from ebs_presets import build_query, get_entity_list, get_module_list, get_preset
+from ebs_presets import build_query, get_entity_list, get_preset
 from oracle_client import OracleEBSClient
+from ssh_utils import SSHException, get_private_key
+
+LOCAL_BIND_HOST = "127.0.0.1"
+
+
+@dataclass
+class ConnectionResult(SyncActionResult):
+    version: str
+
+
+@dataclass
+class QueryValidationResult(SyncActionResult):
+    columns: list[str]
+    rowCount: int
+    sampleRows: list[dict]
 
 
 class Component(ComponentBase):
     def __init__(self) -> None:
         super().__init__()
         self.params = Configuration(**self.configuration.parameters)
+        self._ssh_tunnel: SSHTunnelForwarder | None = None
 
     def run(self) -> None:
         """Main execution — orchestrates the extraction workflow."""
         self.params.validate_row()
-        client = self._build_client()
-
-        if self.params.source.extraction_mode == ExtractionMode.PRESET:
-            self._run_preset(client)
-        else:
-            self._run_custom(client)
+        try:
+            client = self._build_client()
+            if self.params.source.extraction_mode == ExtractionMode.PRESET:
+                self._run_preset(client)
+            else:
+                self._run_custom(client)
+        finally:
+            self._stop_ssh_tunnel()
 
     # ── Sync Actions ──────────────────────────────────────────────
 
     @sync_action("testConnection")
-    def test_connection(self) -> None:
+    def test_connection(self) -> ConnectionResult:
         self.params.validate_connection()
-        result = self._build_client().test_connection()
+        with self._client() as c:
+            result = c.test_connection()
         logging.info("Connection OK — %s", result["version"])
+        return ConnectionResult(version=result["version"])
 
     @sync_action("listOperatingUnits")
     def list_operating_units(self) -> list[SelectElement]:
         self.params.validate_connection()
-        rows = self._build_client().list_operating_units()
+        with self._client() as c:
+            rows = c.list_operating_units()
         return [SelectElement(value=str(r["ORGANIZATION_ID"]), label=f"{r['NAME']}") for r in rows]
 
     @sync_action("listLedgers")
     def list_ledgers(self) -> list[SelectElement]:
         self.params.validate_connection()
-        rows = self._build_client().list_ledgers()
+        with self._client() as c:
+            rows = c.list_ledgers()
         return [SelectElement(value=str(r["LEDGER_ID"]), label=f"{r['NAME']} ({r['CURRENCY_CODE']})") for r in rows]
-
-    @sync_action("listModules")
-    def list_modules(self) -> list[SelectElement]:
-        return [SelectElement(value=m["value"], label=m["label"]) for m in get_module_list()]
 
     @sync_action("listEntities")
     def list_entities(self) -> list[SelectElement]:
-        module = self.configuration.parameters.get("source", {}).get("module", "")
+        module = self.params.source.module
         if not module:
             raise UserException("Select a module first, then reload entities.")
         return [SelectElement(value=e["value"], label=e["label"]) for e in get_entity_list(module)]
+
+    @sync_action("listTables")
+    def list_tables(self) -> list[SelectElement]:
+        """List EBS tables for a module prefix (e.g. AP → AP_INVOICES_ALL, AP_SUPPLIERS, ...)."""
+        self.params.validate_connection()
+        module = self.params.source.module
+        if not module:
+            raise UserException("Select a module first, then reload tables.")
+        # Keys are module IDs from configRowSchema.json; values are Oracle's DB table prefixes.
+        # Several prefixes differ because Oracle uses legacy application names, not current module names.
+        prefix_map = {
+            "ap": "AP_",  # Accounts Payable — matches
+            "ar": "RA_",  # Accounts Receivable — Oracle's original name was Revenue Accounting
+            "gl": "GL_",  # General Ledger — matches
+            "po": "PO_",  # Purchasing — matches
+            "inv": "MTL_",  # Inventory — Oracle's original name was Materials
+            "hr": "PER_",  # Human Resources — Oracle's original name was Personnel
+            "om": "OE_",  # Order Management — Oracle's original name was Order Entry
+            "tca": "HZ_",  # Trading Community Arch — Oracle uses HZ_ (Horizontal) for the party model
+        }
+        prefix = prefix_map.get(module, f"{module.upper()}_")
+        with self._client() as c:
+            rows = c.list_module_tables(prefix)
+        return [SelectElement(value=r["TABLE_NAME"], label=r["TABLE_NAME"]) for r in rows]
+
+    @sync_action("validateQuery")
+    def validate_query(self) -> QueryValidationResult:
+        """Run user's custom SQL with ROWNUM <= 10 and return column names + sample rows."""
+        self.params.validate_connection()
+        query = self.params.source.custom_query
+        if not query:
+            raise UserException("Enter a SQL query first.")
+        with self._client() as c:
+            columns, rows = c.validate_query(query)
+        logging.info("Query valid — %d columns, %d sample rows", len(columns), len(rows))
+        return QueryValidationResult(columns=columns, rowCount=len(rows), sampleRows=rows)
 
     # ── Extraction ────────────────────────────────────────────────
 
@@ -81,7 +140,7 @@ class Component(ComponentBase):
         pk = dest.primary_key or preset["default_primary_key"]
 
         logging.info("Preset extraction: %s/%s → %s", src.module, src.entity, output_table)
-        columns, rows = client.execute_query(sql, params=params)
+        columns, rows = client.execute_query_stream(sql, params=params)
 
         self._write_table(output_table, columns, rows, dest.incremental, pk)
 
@@ -92,8 +151,11 @@ class Component(ComponentBase):
         dest = self.params.destination
         query = self.params.source.custom_query
 
+        if dest.incremental and not dest.primary_key:
+            raise UserException("'primary_key' is required when incremental loading is enabled in custom mode.")
+
         logging.info("Custom query → %s", dest.output_table)
-        columns, rows = client.execute_query(query)
+        columns, rows = client.execute_query_stream(query)
 
         self._write_table(dest.output_table, columns, rows, dest.incremental, dest.primary_key)
 
@@ -102,15 +164,69 @@ class Component(ComponentBase):
 
     # ── Helpers ───────────────────────────────────────────────────
 
+    @contextmanager
+    def _client(self):
+        try:
+            yield self._build_client()
+        except UserException:
+            raise
+        except Exception as e:
+            raise UserException(f"Action failed: {e}") from e
+        finally:
+            self._stop_ssh_tunnel()
+
     def _build_client(self) -> OracleEBSClient:
+        self._ensure_ssh_tunnel()
         p = self.params
+        host = p.db_host
+        port = p.db_port
+        if self._ssh_tunnel is not None and self._ssh_tunnel.is_active:
+            host = LOCAL_BIND_HOST
+            port = self._ssh_tunnel.local_bind_port
         return OracleEBSClient(
-            host=p.db_host,
-            port=p.db_port,
+            host=host,
+            port=port,
             service_name=p.db_service_name,
             user=p.db_user,
             password=p.db_password,
         )
+
+    def _ensure_ssh_tunnel(self) -> None:
+        ssh = self.params.ssh_options
+        if not ssh.enabled:
+            return
+        if self._ssh_tunnel is not None and self._ssh_tunnel.is_active:
+            return
+
+        try:
+            pkey = get_private_key(ssh.keys.private, None)
+        except SSHException as e:
+            raise UserException(f"Invalid SSH private key: {e}") from e
+
+        self._ssh_tunnel = SSHTunnelForwarder(
+            ssh_address_or_host=(ssh.ssh_host, ssh.ssh_port),
+            ssh_username=ssh.user,
+            ssh_pkey=pkey,
+            remote_bind_address=(self.params.db_host, self.params.db_port),
+            local_bind_address=(LOCAL_BIND_HOST, self.params.db_port),
+            ssh_config_file=None,
+            allow_agent=False,
+        )
+        try:
+            self._ssh_tunnel.start()
+        except BaseSSHTunnelForwarderError as e:
+            raise UserException("Failed to establish SSH connection. Recheck the SSH tunnel configuration.") from e
+        logging.info("SSH tunnel established to %s:%s via %s", self.params.db_host, self.params.db_port, ssh.ssh_host)
+
+    def _stop_ssh_tunnel(self) -> None:
+        tunnel = getattr(self, "_ssh_tunnel", None)
+        if tunnel is None:
+            return
+        try:
+            if tunnel.is_active:
+                tunnel.stop()
+        except Exception:  # noqa: BLE001 — best-effort teardown
+            logging.debug("SSH tunnel stop failed", exc_info=True)
 
     def _get_since_datetime(self) -> datetime | None:
         if not self.params.destination.incremental:
@@ -131,16 +247,23 @@ class Component(ComponentBase):
         self,
         table_name: str,
         columns: list[str],
-        rows: list[dict],
+        rows: Iterable[dict],
         incremental: bool = False,
         primary_key: list[str] | None = None,
     ) -> None:
         pk = primary_key or []
         columns = _normalize_columns(columns)
-        rows = [{_normalize_col_name(k): v for k, v in row.items()} for row in rows]
         pk = [_normalize_col_name(k) for k in pk]
 
-        schema = _build_schema(columns, pk, rows)
+        # Peek the first row so we can infer the schema without buffering the
+        # whole result set. Stitch it back via itertools.chain so the CSV write
+        # below sees every row.
+        normalized_rows: Iterator[dict] = ({_normalize_col_name(k): v for k, v in row.items()} for row in rows)
+        first_row: dict | None = next(normalized_rows, None)
+        if first_row is not None:
+            normalized_rows = chain([first_row], normalized_rows)
+
+        schema = _build_schema(columns, pk, first_row)
         table_def = self.create_out_table_definition(
             f"{table_name}.csv",
             incremental=incremental,
@@ -149,15 +272,16 @@ class Component(ComponentBase):
             has_header=True,
         )
 
+        row_count = 0
         with open(table_def.full_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=columns, extrasaction="ignore")
             writer.writeheader()
-            for row in rows:
-                # Convert non-string values to strings for CSV
+            for row in normalized_rows:
                 writer.writerow({k: _to_csv_value(v) for k, v in row.items()})
+                row_count += 1
 
         self.write_manifest(table_def)
-        logging.info("Wrote %d rows to %s", len(rows), table_name)
+        logging.info("Wrote %d rows to %s", row_count, table_name)
 
 
 # ── Standalone utilities ─────────────────────────────────────────
@@ -181,11 +305,9 @@ def _to_csv_value(value: object) -> str:
     return str(value)
 
 
-def _build_schema(columns: list[str], primary_key: list[str], rows: list[dict]) -> dict[str, ColumnDefinition]:
-    """Infer column types from first non-empty row of data."""
-    sample: dict = {}
-    if rows:
-        sample = rows[0]
+def _build_schema(columns: list[str], primary_key: list[str], sample: dict | None) -> dict[str, ColumnDefinition]:
+    """Infer column types from a single sample row (or all-string when empty)."""
+    sample = sample or {}
 
     schema: dict[str, ColumnDefinition] = {}
     for col in columns:

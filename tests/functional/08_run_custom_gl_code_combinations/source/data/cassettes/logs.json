@@ -6,19 +6,19 @@
       "level": "INFO",
       "logger": "root",
       "message": "Custom query \u2192 ebs_gl_code_combinations",
-      "timestamp": "2026-04-13T14:28:18.832Z"
+      "timestamp": "2026-04-23T08:40:19.907Z"
     },
     {
       "level": "INFO",
       "logger": "root",
       "message": "Query returned 50 rows, 7 columns",
-      "timestamp": "2026-04-13T14:28:19.099Z"
+      "timestamp": "2026-04-23T08:40:20.223Z"
     },
     {
       "level": "INFO",
       "logger": "root",
       "message": "Wrote 50 rows to ebs_gl_code_combinations",
-      "timestamp": "2026-04-13T14:28:19.131Z"
+      "timestamp": "2026-04-23T08:40:20.251Z"
     }
   ]
 }

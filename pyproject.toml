@@ -7,7 +7,9 @@ dependencies = [
     "keboola-component>=1.9.0",
     "keboola-utils>=1.1.0",
     "oracledb>=2.5.0",
+    "paramiko>=3.4.0",
     "pydantic>=2.11.7",
+    "sshtunnel>=0.4.0",
 ]
 
 [dependency-groups]
@@ -21,12 +23,9 @@ dev = [
     "ruff>=0.15.2",
 ]
 
-[tool.uv.sources]
-keboola-datadirtest = { path = "/Users/matyasjirat/VSCodeProjects/Keboola/datadirtest", editable = true }
-keboola-vcr = { path = "/Users/matyasjirat/VSCodeProjects/Keboola/python-vcr-tests", editable = true }
-
 [tool.ruff]
 line-length = 120
+target-version = "py313"
 
 [tool.ruff.lint]
 extend-select = [

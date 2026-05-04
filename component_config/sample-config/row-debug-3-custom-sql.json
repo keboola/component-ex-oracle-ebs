@@ -1,0 +1,13 @@
+{
+  "parameters": {
+    "source": {
+      "extraction_mode": "Custom",
+      "custom_query": "SELECT code_combination_id, segment1, segment2, segment3, account_type, enabled_flag FROM apps.gl_code_combinations WHERE enabled_flag = 'Y' AND ROWNUM <= 100"
+    },
+    "destination": {
+      "output_table": "ebs_gl_code_combinations_sample",
+      "incremental": false,
+      "primary_key": ["code_combination_id"]
+    }
+  }
+}

@@ -6,19 +6,19 @@
       "level": "INFO",
       "logger": "root",
       "message": "Custom query \u2192 ebs_fnd_users_sample",
-      "timestamp": "2026-04-13T14:28:18.491Z"
+      "timestamp": "2026-04-23T08:40:19.581Z"
     },
     {
       "level": "INFO",
       "logger": "root",
       "message": "Query returned 10 rows, 4 columns",
-      "timestamp": "2026-04-13T14:28:18.752Z"
+      "timestamp": "2026-04-23T08:40:19.869Z"
     },
     {
       "level": "INFO",
       "logger": "root",
       "message": "Wrote 10 rows to ebs_fnd_users_sample",
-      "timestamp": "2026-04-13T14:28:18.783Z"
+      "timestamp": "2026-04-23T08:40:19.897Z"
     }
   ]
 }

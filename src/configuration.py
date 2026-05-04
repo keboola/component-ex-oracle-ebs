@@ -5,8 +5,8 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_valida
 
 
 class ExtractionMode(StrEnum):
-    PRESET = "preset"
-    CUSTOM = "custom"
+    PRESET = "Preset"
+    CUSTOM = "Custom"
 
 
 class SourceConfig(BaseModel):
@@ -24,6 +24,21 @@ class DestinationConfig(BaseModel):
     primary_key: list[str] = Field(default_factory=list)
 
 
+class SSHKeys(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, extra="ignore")
+    private: str = Field(alias="#private", default="")
+    public: str = ""
+
+
+class SSHOptions(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, extra="ignore")
+    enabled: bool = False
+    user: str = ""
+    ssh_host: str = Field(alias="sshHost", default="")
+    ssh_port: int = Field(alias="sshPort", default=22)
+    keys: SSHKeys = Field(default_factory=SSHKeys)
+
+
 class Configuration(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
 
@@ -31,8 +46,10 @@ class Configuration(BaseModel):
     db_host: str = ""
     db_port: int = 1521
     db_service_name: str = ""
-    db_user: str = Field(alias="#db_user", default="")
+    db_user: str = ""
     db_password: str = Field(alias="#db_password", default="")
+
+    ssh_options: SSHOptions = Field(default_factory=SSHOptions)
 
     # Row-level extraction config
     source: SourceConfig = Field(default_factory=SourceConfig)
@@ -65,6 +82,13 @@ class Configuration(BaseModel):
             raise UserException("'db_user' is required in connection settings.")
         if not self.db_password:
             raise UserException("'db_password' is required in connection settings.")
+        if self.ssh_options.enabled:
+            if not self.ssh_options.ssh_host:
+                raise UserException("'sshHost' is required when SSH tunnel is enabled.")
+            if not self.ssh_options.user:
+                raise UserException("SSH tunnel 'user' is required.")
+            if not self.ssh_options.keys.private:
+                raise UserException("SSH private key is required when SSH tunnel is enabled.")
 
     def validate_row(self) -> None:
         self.validate_connection()

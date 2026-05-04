@@ -5,11 +5,11 @@
       "db_host": "PLACEHOLDER",
       "db_port": 1521,
       "db_service_name": "PLACEHOLDER",
-      "#db_user": "PLACEHOLDER",
+      "db_user": "PLACEHOLDER",
       "#db_password": "PLACEHOLDER"
     },
     "source": {
-      "extraction_mode": "custom",
+      "extraction_mode": "Custom",
       "custom_query": "SELECT code_combination_id, chart_of_accounts_id, segment1, segment2, segment3, account_type, enabled_flag FROM apps.gl_code_combinations WHERE enabled_flag = 'Y' AND ROWNUM <= 50"
     },
     "destination": {

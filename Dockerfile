@@ -1,15 +1,39 @@
-FROM python:3.13-slim AS base
+# Pinned to trixie so the libaio package name (libaio1t64) is stable across rebuilds.
+FROM python:3.13-slim-trixie AS base
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /code/
+
+# ── Oracle Instant Client (Basic Light) ─────────────────────────────────
+# Required for connecting to Oracle EBS servers with sec_case_sensitive_logon=FALSE
+# or users with only the legacy 10G password verifier. Installed under Oracle
+# Free Use Terms and Conditions (FUTC) — freely redistributable in applications.
+# https://www.oracle.com/downloads/licenses/oracle-free-license.html
+ARG INSTANT_CLIENT_URL="https://download.oracle.com/otn_software/linux/instantclient/2380000/instantclient-basiclite-linux.x64-23.8.0.25.04.zip"
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git curl ca-certificates libaio1t64 unzip \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /opt/oracle \
+    && curl -fsSL -o /tmp/ic.zip "${INSTANT_CLIENT_URL}" \
+    && unzip -q /tmp/ic.zip -d /opt/oracle \
+    && rm /tmp/ic.zip \
+    && ln -sfn /opt/oracle/instantclient_* /opt/oracle/instantclient \
+    && echo "/opt/oracle/instantclient" > /etc/ld.so.conf.d/oracle-instantclient.conf \
+    # Compatibility symlink for Debian trixie+ t64 transition: Instant Client 23.x
+    # is compiled against libaio.so.1 but trixie ships libaio.so.1t64.
+    && if [ -f /usr/lib/x86_64-linux-gnu/libaio.so.1t64 ] && [ ! -e /usr/lib/x86_64-linux-gnu/libaio.so.1 ]; then \
+           ln -s libaio.so.1t64 /usr/lib/x86_64-linux-gnu/libaio.so.1; \
+       fi \
+    && ldconfig
+ENV LD_LIBRARY_PATH="/opt/oracle/instantclient:${LD_LIBRARY_PATH}"
+
+# ── Python deps ─────────────────────────────────────────────────────────
 COPY pyproject.toml uv.lock ./
 
 ENV UV_PROJECT_ENVIRONMENT="/usr/local/"
 RUN uv sync --no-dev --frozen
 
 COPY src/ src/
-COPY scripts/ scripts/
-COPY deploy.sh .
 
 FROM base AS test
 RUN uv sync --all-groups --frozen

@@ -1,14 +1,14 @@
 {
   "parameters": {
     "connection": {
-      "db_host": "apps.example.com",
+      "db_host": "your-ebs-host.example.com",
       "db_port": 1521,
-      "db_service_name": "ebs_EBSDB",
-      "#db_user": "keboola_ro",
-      "#db_password": "secret"
+      "db_service_name": "EBSDB",
+      "db_user": "your_readonly_user",
+      "#db_password": "your_password"
     },
     "source": {
-      "extraction_mode": "preset",
+      "extraction_mode": "Preset",
       "module": "ap",
       "entity": "ap_invoices",
       "org_id": "204"

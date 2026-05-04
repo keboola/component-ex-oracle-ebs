@@ -5,11 +5,11 @@
       "db_host": "PLACEHOLDER",
       "db_port": 1521,
       "db_service_name": "PLACEHOLDER",
-      "#db_user": "PLACEHOLDER",
+      "db_user": "PLACEHOLDER",
       "#db_password": "PLACEHOLDER"
     },
     "source": {
-      "extraction_mode": "custom",
+      "extraction_mode": "Custom",
       "custom_query": "SELECT ph.po_header_id, ph.segment1 AS po_number, ph.type_lookup_code, ph.authorization_status, s.vendor_name, ph.currency_code, ph.org_id FROM apps.po_headers_all ph LEFT JOIN apps.po_vendors s ON ph.vendor_id = s.vendor_id WHERE ph.org_id = 204 AND ROWNUM <= 50"
     },
     "destination": {

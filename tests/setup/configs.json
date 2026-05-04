@@ -9,7 +9,7 @@
           "db_host": "PLACEHOLDER",
           "db_port": 1521,
           "db_service_name": "PLACEHOLDER",
-          "#db_user": "PLACEHOLDER",
+          "db_user": "PLACEHOLDER",
           "#db_password": "PLACEHOLDER"
         }
       }
@@ -25,7 +25,7 @@
           "db_host": "PLACEHOLDER",
           "db_port": 1521,
           "db_service_name": "PLACEHOLDER",
-          "#db_user": "PLACEHOLDER",
+          "db_user": "PLACEHOLDER",
           "#db_password": "PLACEHOLDER"
         }
       }
@@ -41,7 +41,7 @@
           "db_host": "PLACEHOLDER",
           "db_port": 1521,
           "db_service_name": "PLACEHOLDER",
-          "#db_user": "PLACEHOLDER",
+          "db_user": "PLACEHOLDER",
           "#db_password": "PLACEHOLDER"
         }
       }
@@ -57,7 +57,7 @@
           "db_host": "PLACEHOLDER",
           "db_port": 1521,
           "db_service_name": "PLACEHOLDER",
-          "#db_user": "PLACEHOLDER",
+          "db_user": "PLACEHOLDER",
           "#db_password": "PLACEHOLDER"
         }
       }
@@ -73,7 +73,7 @@
           "db_host": "PLACEHOLDER",
           "db_port": 1521,
           "db_service_name": "PLACEHOLDER",
-          "#db_user": "PLACEHOLDER",
+          "db_user": "PLACEHOLDER",
           "#db_password": "PLACEHOLDER"
         },
         "source": {
@@ -92,11 +92,11 @@
           "db_host": "PLACEHOLDER",
           "db_port": 1521,
           "db_service_name": "PLACEHOLDER",
-          "#db_user": "PLACEHOLDER",
+          "db_user": "PLACEHOLDER",
           "#db_password": "PLACEHOLDER"
         },
         "source": {
-          "extraction_mode": "preset",
+          "extraction_mode": "Preset",
           "module": "ap",
           "entity": "ap_suppliers"
         },
@@ -118,11 +118,11 @@
           "db_host": "PLACEHOLDER",
           "db_port": 1521,
           "db_service_name": "PLACEHOLDER",
-          "#db_user": "PLACEHOLDER",
+          "db_user": "PLACEHOLDER",
           "#db_password": "PLACEHOLDER"
         },
         "source": {
-          "extraction_mode": "custom",
+          "extraction_mode": "Custom",
           "custom_query": "SELECT user_id, user_name, email_address, creation_date FROM apps.fnd_user WHERE ROWNUM <= 10 ORDER BY user_id"
         },
         "destination": {
@@ -143,11 +143,11 @@
           "db_host": "PLACEHOLDER",
           "db_port": 1521,
           "db_service_name": "PLACEHOLDER",
-          "#db_user": "PLACEHOLDER",
+          "db_user": "PLACEHOLDER",
           "#db_password": "PLACEHOLDER"
         },
         "source": {
-          "extraction_mode": "custom",
+          "extraction_mode": "Custom",
           "custom_query": "SELECT code_combination_id, chart_of_accounts_id, segment1, segment2, segment3, account_type, enabled_flag FROM apps.gl_code_combinations WHERE enabled_flag = 'Y' AND ROWNUM <= 50"
         },
         "destination": {
@@ -168,11 +168,11 @@
           "db_host": "PLACEHOLDER",
           "db_port": 1521,
           "db_service_name": "PLACEHOLDER",
-          "#db_user": "PLACEHOLDER",
+          "db_user": "PLACEHOLDER",
           "#db_password": "PLACEHOLDER"
         },
         "source": {
-          "extraction_mode": "preset",
+          "extraction_mode": "Preset",
           "module": "tca",
           "entity": "hz_cust_accounts"
         },
@@ -194,11 +194,11 @@
           "db_host": "PLACEHOLDER",
           "db_port": 1521,
           "db_service_name": "PLACEHOLDER",
-          "#db_user": "PLACEHOLDER",
+          "db_user": "PLACEHOLDER",
           "#db_password": "PLACEHOLDER"
         },
         "source": {
-          "extraction_mode": "custom",
+          "extraction_mode": "Custom",
           "custom_query": "SELECT ph.po_header_id, ph.segment1 AS po_number, ph.type_lookup_code, ph.authorization_status, s.vendor_name, ph.currency_code, ph.org_id FROM apps.po_headers_all ph LEFT JOIN apps.po_vendors s ON ph.vendor_id = s.vendor_id WHERE ph.org_id = 204 AND ROWNUM <= 50"
         },
         "destination": {
@@ -219,11 +219,11 @@
           "db_host": "PLACEHOLDER",
           "db_port": 1521,
           "db_service_name": "PLACEHOLDER",
-          "#db_user": "PLACEHOLDER",
+          "db_user": "PLACEHOLDER",
           "#db_password": "PLACEHOLDER"
         },
         "source": {
-          "extraction_mode": "custom",
+          "extraction_mode": "Custom",
           "custom_query": "SELECT ct.customer_trx_id, ct.trx_number, ct.trx_date, hp.party_name AS customer_name, ct.invoice_currency_code, ct.org_id FROM apps.ra_customer_trx_all ct LEFT JOIN apps.hz_cust_accounts ca ON ct.bill_to_customer_id = ca.cust_account_id LEFT JOIN apps.hz_parties hp ON ca.party_id = hp.party_id WHERE ct.org_id = 204 AND ROWNUM <= 50"
         },
         "destination": {
@@ -244,11 +244,11 @@
           "db_host": "PLACEHOLDER",
           "db_port": 1521,
           "db_service_name": "PLACEHOLDER",
-          "#db_user": "PLACEHOLDER",
+          "db_user": "PLACEHOLDER",
           "#db_password": "PLACEHOLDER"
         },
         "source": {
-          "extraction_mode": "custom",
+          "extraction_mode": "Custom",
           "custom_query": "SELECT i.invoice_id, i.invoice_num, i.invoice_amount, s.vendor_name FROM apps.ap_invoices_all i LEFT JOIN apps.ap_suppliers s ON i.vendor_id = s.vendor_id WHERE i.org_id = 204 AND ROWNUM <= 20"
         },
         "destination": {
@@ -269,11 +269,11 @@
           "db_host": "PLACEHOLDER",
           "db_port": 1521,
           "db_service_name": "PLACEHOLDER",
-          "#db_user": "PLACEHOLDER",
+          "db_user": "PLACEHOLDER",
           "#db_password": "PLACEHOLDER"
         },
         "source": {
-          "extraction_mode": "preset",
+          "extraction_mode": "Preset",
           "module": "ap",
           "entity": "nonexistent_entity"
         },
@@ -294,11 +294,11 @@
           "db_host": "PLACEHOLDER",
           "db_port": 1521,
           "db_service_name": "PLACEHOLDER",
-          "#db_user": "PLACEHOLDER",
+          "db_user": "PLACEHOLDER",
           "#db_password": "PLACEHOLDER"
         },
         "source": {
-          "extraction_mode": "preset",
+          "extraction_mode": "Preset",
           "module": "",
           "entity": ""
         },
@@ -319,16 +319,54 @@
           "db_host": "PLACEHOLDER",
           "db_port": 1521,
           "db_service_name": "PLACEHOLDER",
-          "#db_user": "PLACEHOLDER",
+          "db_user": "PLACEHOLDER",
           "#db_password": "PLACEHOLDER"
         },
         "source": {
-          "extraction_mode": "custom",
+          "extraction_mode": "Custom",
           "custom_query": "SELECT * FROM apps.nonexistent_table_xyz"
         },
         "destination": {
           "output_table": "should_not_exist",
           "incremental": false
+        }
+      }
+    }
+  },
+  {
+    "name": "16_listTables_ap",
+    "description": "Sync action: list AP module tables from database",
+    "config": {
+      "action": "listTables",
+      "parameters": {
+        "connection": {
+          "db_host": "PLACEHOLDER",
+          "db_port": 1521,
+          "db_service_name": "PLACEHOLDER",
+          "db_user": "PLACEHOLDER",
+          "#db_password": "PLACEHOLDER"
+        },
+        "source": {
+          "module": "ap"
+        }
+      }
+    }
+  },
+  {
+    "name": "17_validateQuery",
+    "description": "Sync action: validate custom SQL query with 10-row sample",
+    "config": {
+      "action": "validateQuery",
+      "parameters": {
+        "connection": {
+          "db_host": "PLACEHOLDER",
+          "db_port": 1521,
+          "db_service_name": "PLACEHOLDER",
+          "db_user": "PLACEHOLDER",
+          "#db_password": "PLACEHOLDER"
+        },
+        "source": {
+          "custom_query": "SELECT vendor_id, vendor_name FROM apps.ap_suppliers ORDER BY vendor_id"
         }
       }
     }

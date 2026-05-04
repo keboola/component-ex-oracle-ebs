@@ -5,11 +5,11 @@
       "db_host": "PLACEHOLDER",
       "db_port": 1521,
       "db_service_name": "PLACEHOLDER",
-      "#db_user": "PLACEHOLDER",
+      "db_user": "PLACEHOLDER",
       "#db_password": "PLACEHOLDER"
     },
     "source": {
-      "extraction_mode": "custom",
+      "extraction_mode": "Custom",
       "custom_query": "SELECT i.invoice_id, i.invoice_num, i.invoice_amount, s.vendor_name FROM apps.ap_invoices_all i LEFT JOIN apps.ap_suppliers s ON i.vendor_id = s.vendor_id WHERE i.org_id = 204 AND ROWNUM <= 20"
     },
     "destination": {

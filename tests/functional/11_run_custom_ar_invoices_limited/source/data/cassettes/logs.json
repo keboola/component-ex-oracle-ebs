@@ -6,19 +6,19 @@
       "level": "INFO",
       "logger": "root",
       "message": "Custom query \u2192 ebs_ar_invoices",
-      "timestamp": "2026-04-13T14:28:19.968Z"
+      "timestamp": "2026-04-23T08:40:22.773Z"
     },
     {
       "level": "INFO",
       "logger": "root",
       "message": "Query returned 50 rows, 6 columns",
-      "timestamp": "2026-04-13T14:28:20.239Z"
+      "timestamp": "2026-04-23T08:40:23.090Z"
     },
     {
       "level": "INFO",
       "logger": "root",
       "message": "Wrote 50 rows to ebs_ar_invoices",
-      "timestamp": "2026-04-13T14:28:20.265Z"
+      "timestamp": "2026-04-23T08:40:23.118Z"
     }
   ]
 }

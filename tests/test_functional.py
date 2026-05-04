@@ -1,6 +1,5 @@
 """Functional tests for Oracle EBS extractor using DB VCR cassettes."""
 
-import re
 from pathlib import Path
 
 import pytest
@@ -9,13 +8,6 @@ from keboola.vcr.db_recorder import OracleDBAdapter
 
 FUNCTIONAL_DIR = str(Path(__file__).parent / "functional")
 COMPONENT_SCRIPT = str(Path(__file__).parent.parent / "src" / "component.py")
-
-# Normalize absolute file paths in tracebacks to relative (src/...)
-# so logs match between recording (relative) and replay (absolute).
-_PROJECT_ROOT = str(Path(__file__).parent.parent) + "/"
-LOG_NORMALIZERS = [
-    (re.escape(_PROJECT_ROOT), ""),
-]
 
 
 @pytest.mark.parametrize("test_name", get_test_cases(FUNCTIONAL_DIR))
