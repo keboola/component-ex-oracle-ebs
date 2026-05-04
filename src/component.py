@@ -6,15 +6,16 @@ Supports preset module/entity selection with pre-built SQL, or custom SQL querie
 
 import csv
 import logging
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Iterable, Iterator
+from contextlib import contextmanager
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from itertools import chain
-from typing import TypeVar
 
 from keboola.component.base import ComponentBase, sync_action
 from keboola.component.dao import BaseType, ColumnDefinition, SupportedDataTypes
 from keboola.component.exceptions import UserException
-from keboola.component.sync_actions import SelectElement
+from keboola.component.sync_actions import SelectElement, SyncActionResult
 from sshtunnel import BaseSSHTunnelForwarderError, SSHTunnelForwarder
 
 from configuration import Configuration, ExtractionMode
@@ -24,7 +25,17 @@ from ssh_utils import SSHException, get_private_key
 
 LOCAL_BIND_HOST = "127.0.0.1"
 
-T = TypeVar("T")
+
+@dataclass
+class ConnectionResult(SyncActionResult):
+    version: str
+
+
+@dataclass
+class QueryValidationResult(SyncActionResult):
+    columns: list[str]
+    rowCount: int
+    sampleRows: list[dict]
 
 
 class Component(ComponentBase):
@@ -48,22 +59,25 @@ class Component(ComponentBase):
     # ── Sync Actions ──────────────────────────────────────────────
 
     @sync_action("testConnection")
-    def test_connection(self) -> dict:
+    def test_connection(self) -> ConnectionResult:
         self.params.validate_connection()
-        result = self._with_client(lambda c: c.test_connection())
+        with self._client() as c:
+            result = c.test_connection()
         logging.info("Connection OK — %s", result["version"])
-        return {"status": "success", "version": result["version"]}
+        return ConnectionResult(version=result["version"])
 
     @sync_action("listOperatingUnits")
     def list_operating_units(self) -> list[SelectElement]:
         self.params.validate_connection()
-        rows = self._with_client(lambda c: c.list_operating_units())
+        with self._client() as c:
+            rows = c.list_operating_units()
         return [SelectElement(value=str(r["ORGANIZATION_ID"]), label=f"{r['NAME']}") for r in rows]
 
     @sync_action("listLedgers")
     def list_ledgers(self) -> list[SelectElement]:
         self.params.validate_connection()
-        rows = self._with_client(lambda c: c.list_ledgers())
+        with self._client() as c:
+            rows = c.list_ledgers()
         return [SelectElement(value=str(r["LEDGER_ID"]), label=f"{r['NAME']} ({r['CURRENCY_CODE']})") for r in rows]
 
     @sync_action("listEntities")
@@ -80,41 +94,34 @@ class Component(ComponentBase):
         module = self.params.source.module
         if not module:
             raise UserException("Select a module first, then reload tables.")
-        # Module → Oracle EBS schema/table prefix. These are the conventional
-        # short codes for each EBS application area (Payables tables live under
-        # AP_, Receivables transactions under RA_, Inventory under MTL_ for
-        # Materials, Order Entry under OE_, Trading Community Architecture
-        # under HZ_, etc.). Oracle's authoritative table reference lives in
-        # the eTRM behind My Oracle Support; there is no equivalent public URL.
+        # Keys are module IDs from configRowSchema.json; values are Oracle's DB table prefixes.
+        # Several prefixes differ because Oracle uses legacy application names, not current module names.
         prefix_map = {
-            "ap": "AP_",
-            "ar": "RA_",
-            "gl": "GL_",
-            "po": "PO_",
-            "inv": "MTL_",
-            "hr": "PER_",
-            "om": "OE_",
-            "tca": "HZ_",
+            "ap": "AP_",  # Accounts Payable — matches
+            "ar": "RA_",  # Accounts Receivable — Oracle's original name was Revenue Accounting
+            "gl": "GL_",  # General Ledger — matches
+            "po": "PO_",  # Purchasing — matches
+            "inv": "MTL_",  # Inventory — Oracle's original name was Materials
+            "hr": "PER_",  # Human Resources — Oracle's original name was Personnel
+            "om": "OE_",  # Order Management — Oracle's original name was Order Entry
+            "tca": "HZ_",  # Trading Community Arch — Oracle uses HZ_ (Horizontal) for the party model
         }
         prefix = prefix_map.get(module, f"{module.upper()}_")
-        rows = self._with_client(lambda c: c.list_module_tables(prefix))
+        with self._client() as c:
+            rows = c.list_module_tables(prefix)
         return [SelectElement(value=r["TABLE_NAME"], label=r["TABLE_NAME"]) for r in rows]
 
     @sync_action("validateQuery")
-    def validate_query(self) -> dict:
+    def validate_query(self) -> QueryValidationResult:
         """Run user's custom SQL with ROWNUM <= 10 and return column names + sample rows."""
         self.params.validate_connection()
         query = self.params.source.custom_query
         if not query:
             raise UserException("Enter a SQL query first.")
-        columns, rows = self._with_client(lambda c: c.validate_query(query))
+        with self._client() as c:
+            columns, rows = c.validate_query(query)
         logging.info("Query valid — %d columns, %d sample rows", len(columns), len(rows))
-        return {
-            "status": "success",
-            "columns": columns,
-            "rowCount": len(rows),
-            "sampleRows": rows,
-        }
+        return QueryValidationResult(columns=columns, rowCount=len(rows), sampleRows=rows)
 
     # ── Extraction ────────────────────────────────────────────────
 
@@ -157,14 +164,10 @@ class Component(ComponentBase):
 
     # ── Helpers ───────────────────────────────────────────────────
 
-    def _with_client(self, fn: Callable[[OracleEBSClient], T]) -> T:
-        """Build the client, run fn, and always tear down the SSH tunnel.
-
-        Converts unexpected exceptions to UserException so sync actions surface
-        clean errors to the UI instead of raw tracebacks.
-        """
+    @contextmanager
+    def _client(self):
         try:
-            return fn(self._build_client())
+            yield self._build_client()
         except UserException:
             raise
         except Exception as e:
